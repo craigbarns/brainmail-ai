@@ -18,7 +18,7 @@ export default function Home() {
           </span>
           BRAINMAIL<span className="brand-ai">.ai</span>
         </Link>
-        <Link href="/login" className="button secondary">
+        <Link href={`${process.env.APP_URL || ''}/login`} className="button secondary">
           Se connecter <ArrowUpRight size={16} />
         </Link>
       </header>
@@ -37,7 +37,7 @@ export default function Home() {
             <br />
             BRAINMAIL vous aide à comprendre, classer et préparer la suite.
           </p>
-          <Link href="/login?register=1" className="button">
+          <Link href={`${process.env.APP_URL || ''}/login?register=1`} className="button">
             Créer mon espace <ArrowRight size={18} />
           </Link>
           <p className="subtle">Un espace privé pour chacune de vos sociétés.</p>

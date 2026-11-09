@@ -32,7 +32,14 @@ export async function verifyPassword(password: string, stored: string) {
 }
 export function originCheck(request: Request) {
   const origin = request.headers.get('origin');
-  if (origin !== new URL(process.env.APP_URL || 'http://localhost:3000').origin)
+  if (!origin) return;
+  const allowed = new Set([new URL(process.env.APP_URL || 'http://localhost:3000').origin]);
+  for (const extra of (process.env.EXTRA_ORIGINS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean))
+    allowed.add(new URL(extra).origin);
+  if (!allowed.has(origin))
     throw new HttpError(403, 'Origine de la requête refusée.');
 }
 export async function rateLimit(key: string, max: number, seconds = 900) {
