@@ -175,21 +175,40 @@ export async function documentDetail(
 }
 // Permanent deletion of a document and its files, including abandoned
 // captures: no orphan rows or encrypted objects may survive (RGPD erasure).
-export async function deleteDocument(workspaceId: string, documentId: string) {
-  const files = await query(
-    'SELECT storage_key FROM document_files WHERE document_id=$1 AND workspace_id=$2',
-    [documentId, workspaceId],
-  );
-  await transaction(async (db) => {
-    const { rows } = await db.query(
-      'DELETE FROM documents WHERE id=$1 AND workspace_id=$2 RETURNING id',
+export async function deleteDocument(
+  workspaceId: string,
+  documentId: string,
+  { onlyCapturing = false } = {},
+) {
+  const keys = await transaction(async (db) => {
+    // Lock the document first: a concurrent upload or finalization waits, so the
+    // file list below is complete and the status check cannot go stale.
+    const {
+      rows: [doc],
+    } = await db.query('SELECT status FROM documents WHERE id=$1 AND workspace_id=$2 FOR UPDATE', [
+      documentId,
+      workspaceId,
+    ]);
+    if (!doc) throw new HttpError(404, 'Courrier introuvable.');
+    if (onlyCapturing && doc.status !== 'capturing')
+      throw new HttpError(
+        409,
+        'Ce courrier a déjà été envoyé pour analyse. Supprimez-le depuis sa fiche si besoin.',
+      );
+    const { rows: files } = await db.query(
+      'DELETE FROM document_files WHERE document_id=$1 AND workspace_id=$2 RETURNING storage_key',
       [documentId, workspaceId],
     );
-    if (!rows.length) throw new HttpError(404, 'Courrier introuvable.');
+    await db.query('DELETE FROM documents WHERE id=$1 AND workspace_id=$2', [
+      documentId,
+      workspaceId,
+    ]);
+    // Dropping the lease token stops a worker mid-analysis from re-queuing the job.
     await db.query(
-      "UPDATE jobs SET state='failed',last_error='Courrier supprimé.',lease_until=NULL WHERE workspace_id=$1 AND dedup_key=$2 AND state IN ('queued','running')",
+      "UPDATE jobs SET state='failed',last_error='Courrier supprimé.',lease_until=NULL,lease_token=NULL WHERE workspace_id=$1 AND dedup_key=$2 AND state IN ('queued','running')",
       [workspaceId, `analyze:${documentId}`],
     );
+    return files.map((f) => f.storage_key as string);
   });
-  await Promise.allSettled(files.map((f) => deleteFile(f.storage_key)));
+  await Promise.allSettled(keys.map((key) => deleteFile(key)));
 }

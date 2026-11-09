@@ -25,7 +25,14 @@ import {
 import { claimJob, processJob, workOnce, remindersOnce } from '../src/lib/worker';
 import { encrypt, decrypt, hash } from '../src/lib/security';
 import { validateFile, getFile } from '../src/lib/storage';
-import { dateSchema, analyze, ocr, recallMemory, type Analysis } from '../src/lib/providers';
+import {
+  dateSchema,
+  dateSupported,
+  analyze,
+  ocr,
+  recallMemory,
+  type Analysis,
+} from '../src/lib/providers';
 let temp: string, jpg: Buffer, a: { cookie: string; ws: string }, b: { cookie: string; ws: string };
 const output: Analysis = {
   title: 'Avis de cotisation',
@@ -484,13 +491,13 @@ test('liste d’invitation : espaces et casse tolérés, hors liste refusée', a
 test('suppression définitive d’un courrier, fichiers et capture abandonnée', async () => {
   const s = await createScan(a.ws);
   await appendFile(a.ws, s.documentId, jpg, s.id);
-  assert.equal(
-    (await request(`scans/${s.id}`, 'DELETE', undefined, b.cookie)).status,
-    404,
-  );
+  assert.equal((await request(`scans/${s.id}`, 'DELETE', undefined, b.cookie)).status, 404);
   assert.equal((await request(`scans/${s.id}`, 'DELETE', undefined, a.cookie)).status, 200);
   const list = await request('documents', 'GET', undefined, a.cookie);
-  assert.equal(list.data.some((x: Record<string, any>) => x.id === s.documentId), false);
+  assert.equal(
+    list.data.some((x: Record<string, any>) => x.id === s.documentId),
+    false,
+  );
   const detail = await request(`documents/${s.documentId}`, 'GET', undefined, a.cookie);
   assert.equal(detail.status, 404);
 });
@@ -517,7 +524,11 @@ test('échéance rejetée si la citation ne contient pas la date annoncée', asy
                     dueDate: '2027-01-31',
                     evidence: 'Avant le 15 décembre 2026',
                   },
-                  { label: 'Format numérique', dueDate: '2026-12-15', evidence: 'échéance : 15/12/2026' },
+                  {
+                    label: 'Format numérique',
+                    dueDate: '2026-12-15',
+                    evidence: 'échéance : 15/12/2026',
+                  },
                   {
                     label: 'Apostrophe variante',
                     dueDate: '2026-12-15',
@@ -530,7 +541,8 @@ test('échéance rejetée si la citation ne contient pas la date annoncée', asy
           },
         ],
       });
-    const text = "Cotisation 2026. échéance : 15/12/2026. Avant le 15 décembre 2026. Vous disposez d un délai jusqu au 15 décembre 2026.";
+    const text =
+      'Cotisation 2026. échéance : 15/12/2026. Avant le 15 décembre 2026. Vous disposez d un délai jusqu au 15 décembre 2026.';
     const result = await analyze(text, '');
     const byLabel = Object.fromEntries(result.actions.map((x) => [x.label, x.dueDate]));
     assert.equal(byLabel['Date cohérente'], '2026-12-15');
@@ -545,7 +557,9 @@ test('échéance rejetée si la citation ne contient pas la date annoncée', asy
   }
 });
 test('nettoyage : sessions, compteurs et captures expirés supprimés', async () => {
-  await query("INSERT INTO rate_limits(key,count,resets_at) VALUES('brainmail-stale',1,now()-interval '2 hours')");
+  await query(
+    "INSERT INTO rate_limits(key,count,resets_at) VALUES('brainmail-stale',1,now()-interval '2 hours')",
+  );
   const [existing] = await query<{ user_id: string; workspace_id: string }>(
     'SELECT user_id,workspace_id FROM sessions LIMIT 1',
   );
@@ -560,4 +574,70 @@ test('nettoyage : sessions, compteurs et captures expirés supprimés', async ()
   assert.equal((await query("SELECT 1 FROM rate_limits WHERE key='brainmail-stale'")).length, 0);
   assert.equal((await query("SELECT 1 FROM sessions WHERE token_hash='stale-token'")).length, 0);
   assert.equal((await query('SELECT 1 FROM scans WHERE id=$1', [stale.id])).length, 0);
+});
+test('connexion : une seule adresse IP ne peut pas bloquer le compte d’un client', async () => {
+  const login = (ip: string, password: string) =>
+    handle(
+      new Request('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          origin: 'http://localhost:3000',
+          'Content-Type': 'application/json',
+          'x-forwarded-for': ip,
+        },
+        body: JSON.stringify({ email: 'alpha@example.test', password }),
+      }),
+    );
+  for (let n = 0; n < 10; n++)
+    assert.equal((await login('203.0.113.7', 'wrong-password-long')).status, 401);
+  assert.equal((await login('203.0.113.7', 'wrong-password-long')).status, 429);
+  // A forged first X-Forwarded-For entry does not reset the attacker's counter.
+  assert.equal((await login('198.51.100.1, 203.0.113.7', 'wrong-password-long')).status, 429);
+  // The customer, from their own address, still gets in.
+  assert.equal((await login('192.0.2.44', 'a-long-test-password!')).status, 200);
+});
+test('requête sans en-tête Origin : refusée si le navigateur la signale cross-site', async () => {
+  const send = (headers: Record<string, string>) =>
+    handle(
+      new Request('http://localhost:3000/api/scans', {
+        method: 'POST',
+        headers: { cookie: a.cookie, 'Content-Type': 'application/json', ...headers },
+        body: '{}',
+      }),
+    );
+  assert.equal((await send({ 'sec-fetch-site': 'cross-site' })).status, 403);
+  assert.equal((await send({ 'sec-fetch-site': 'same-site' })).status, 403);
+  assert.equal((await send({ 'sec-fetch-site': 'same-origin' })).status, 201);
+  process.env.EXTRA_ORIGINS = 'pas une url, https://www.example.test';
+  try {
+    assert.equal((await send({ origin: 'https://www.example.test' })).status, 201);
+    assert.equal((await send({ origin: 'https://evil.example' })).status, 403);
+  } finally {
+    delete process.env.EXTRA_ORIGINS;
+  }
+});
+test('révoquer un QR après l’envoi depuis le téléphone ne supprime pas le courrier', async () => {
+  const sent = (await request('scans', 'POST', {}, a.cookie)).data;
+  await pairScan(sent.url.split('#')[1]);
+  await appendFile(a.ws, sent.documentId, jpg, sent.id);
+  await finalizeDocument(a.ws, sent.documentId, sent.id);
+  assert.equal((await request(`scans/${sent.id}`, 'DELETE', undefined, a.cookie)).status, 409);
+  assert.equal((await documentDetail(a.ws, sent.documentId)).files.length, 1);
+  const unused = (await request('scans', 'POST', {}, a.cookie)).data;
+  assert.equal((await request(`scans/${unused.id}`, 'DELETE', undefined, a.cookie)).status, 200);
+  await assert.rejects(documentDetail(a.ws, unused.documentId));
+});
+test('échéance : année et délais relatifs vérifiés dans la citation', () => {
+  assert.equal(dateSupported('2026-12-15', 'Avant le 15 décembre 2025'), false);
+  assert.equal(dateSupported('2026-12-15', 'échéance : 15/12/25'), false);
+  assert.equal(dateSupported('2026-12-15', 'échéance : 15/12/26'), true);
+  assert.equal(
+    dateSupported('2026-12-15', 'Facture 2025 à régler avant le 15 décembre 2026'),
+    true,
+  );
+  assert.equal(dateSupported('2026-02-10', 'sous 30 jours à compter du 10 février'), false);
+  assert.equal(
+    dateSupported('2026-12-15', 'Vous disposez d’un délai jusqu’au 15 décembre 2026'),
+    true,
+  );
 });

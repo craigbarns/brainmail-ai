@@ -7,6 +7,7 @@ import { query, transaction } from './db';
 import {
   HttpError,
   originCheck,
+  clientIp,
   rateLimit,
   cookie,
   cookiesOf,
@@ -93,11 +94,13 @@ async function route(request: Request): Promise<Response> {
       return json({ ok: true });
     }
     const c = credentials.parse(b);
-    const ip = (request.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'local';
-    await rateLimit(`auth:${c.email}`, 10);
-    // Also capped per source IP: one address cannot lock out a customer or
-    // brute-force many accounts through the per-email limit alone.
+    const ip = clientIp(request);
+    // One source address: 60 attempts across all accounts, 10 against one account.
+    // The account-wide cap is far higher, so a single address cannot lock a
+    // customer out; locking them out takes at least ten distinct addresses.
     await rateLimit(`auth-ip:${ip}`, 60);
+    await rateLimit(`auth:${c.email}:${ip}`, 10);
+    await rateLimit(`auth-account:${c.email}`, 100);
     if (parts[1] === 'register') {
       const name = z.string().min(2).max(80).parse(b.name);
       const { token } = await register(c.email, c.password, name);
@@ -234,7 +237,7 @@ async function route(request: Request): Promise<Response> {
     if (
       user.role !== 'owner' ||
       process.env.RESEND_INBOUND_ENABLED !== 'true' ||
-      !process.env.RESEND_API_KEY ||
+      !(process.env.RESEND_INBOUND_API_KEY || process.env.RESEND_API_KEY) ||
       !process.env.RESEND_INBOUND_DOMAIN
     )
       throw new HttpError(503, 'Resend Inboxes non configuré.');
@@ -296,8 +299,9 @@ async function route(request: Request): Promise<Response> {
     if (method === 'GET')
       return json({ ...scan, document: await documentDetail(ws, scan.document_id) });
     if (method === 'DELETE') {
-      // Revoking a QR removes the abandoned capture entirely.
-      await deleteDocument(ws, scan.document_id);
+      // Revoking a QR removes the abandoned capture entirely, but never a mail
+      // the phone already sent for analysis (the screen may lag by a poll).
+      await deleteDocument(ws, scan.document_id, { onlyCapturing: true });
       return json({ ok: true });
     }
   }

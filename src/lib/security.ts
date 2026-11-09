@@ -30,17 +30,37 @@ export async function verifyPassword(password: string, stored: string) {
   const expected = Buffer.from(key, 'hex');
   return expected.length === result.length && timingSafeEqual(expected, result);
 }
+function allowedOrigins() {
+  const allowed = new Set([new URL(process.env.APP_URL || 'http://localhost:3000').origin]);
+  for (const extra of (process.env.EXTRA_ORIGINS || '').split(',')) {
+    // A malformed entry is ignored instead of turning every request into a 500.
+    try {
+      if (extra.trim()) allowed.add(new URL(extra.trim()).origin);
+    } catch {}
+  }
+  return allowed;
+}
 export function originCheck(request: Request) {
   const origin = request.headers.get('origin');
-  if (!origin) return;
-  const allowed = new Set([new URL(process.env.APP_URL || 'http://localhost:3000').origin]);
-  for (const extra of (process.env.EXTRA_ORIGINS || '')
+  if (!origin) {
+    // Browsers send Origin on state-changing requests. Without it, fall back on
+    // Sec-Fetch-Site so a cross-site browser request is still refused; a
+    // non-browser client cannot carry a victim's cookies, so it is not a CSRF vector.
+    const site = request.headers.get('sec-fetch-site');
+    if (site && site !== 'same-origin' && site !== 'none')
+      throw new HttpError(403, 'Origine de la requête refusée.');
+    return;
+  }
+  if (!allowedOrigins().has(origin)) throw new HttpError(403, 'Origine de la requête refusée.');
+}
+// The last X-Forwarded-For entry is the one written by the hosting edge proxy;
+// earlier entries are whatever the client chose to send and can be forged.
+export function clientIp(request: Request) {
+  const hops = (request.headers.get('x-forwarded-for') || '')
     .split(',')
     .map((s) => s.trim())
-    .filter(Boolean))
-    allowed.add(new URL(extra).origin);
-  if (!allowed.has(origin))
-    throw new HttpError(403, 'Origine de la requête refusée.');
+    .filter(Boolean);
+  return hops.at(-1) || 'local';
 }
 export async function rateLimit(key: string, max: number, seconds = 900) {
   const rows = await query(

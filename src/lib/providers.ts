@@ -93,6 +93,8 @@ const MONTHS_ABBR = [
   'nov',
   'déc',
 ];
+const RELATIVE_DELAY =
+  /(?:^|[\s,;(])(?:[àa] compter|[àa] partir|[àa] dater|(?:dans un d[ée]lai de|dans les|sous) \S+ (?:jours?|semaines?|mois))(?=$|[\s,;.)])/u;
 // A deadline only counts if the quoted passage actually contains that date.
 export function dateSupported(dueDate: string | null, evidence: string): boolean {
   if (!dueDate || !/^\d{4}-\d{2}-\d{2}$/.test(dueDate) || !evidence) return false;
@@ -102,13 +104,31 @@ export function dateSupported(dueDate: string | null, evidence: string): boolean
   const monthPadded = dueDate.slice(5, 7);
   const name = MONTHS_FR[Number(month) - 1];
   const abbr = MONTHS_ABBR[Number(month) - 1];
-  const quoted = evidence.toLowerCase().replace(/\u00a0/g, ' ').replace(/1er\b/g, '1');
+  const quoted = evidence
+    .toLowerCase()
+    .replace(/\u00a0/g, ' ')
+    .replace(/[\u2019\u2018'`]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/1er\b/g, '1');
+  // « sous 30 jours à compter du 10 février » quotes the start of a delay, not
+  // the deadline: computing it (working days, receipt date) is left to a human.
+  if (RELATIVE_DELAY.test(quoted)) return false;
+  // A year written in the quote must be the deadline's year.
+  const year = dueDate.slice(0, 4);
+  const years = quoted.match(/\b(?:19|20)\d{2}\b/g);
+  if (years && !years.includes(year)) return false;
+  const shortYear = new RegExp(
+    `\\b(?:${day}|${dayPadded})\\s*[/\\-.]\\s*(?:${month}|${monthPadded})\\s*[/\\-.]\\s*(\\d{2})\\b`,
+  ).exec(quoted);
+  if (shortYear && shortYear[1] !== year.slice(2)) return false;
   if (quoted.includes(dueDate)) return true;
   return [
     new RegExp(`\\b(?:${day}|${dayPadded})\\s*[/\\-.]\\s*(?:${month}|${monthPadded})\\b`),
     new RegExp(`\\b(?:${day}|${dayPadded})(?:er)?\\s+(?:${name}|${abbr})`, 'u'),
     dueDate,
-  ].some((pattern) => (typeof pattern === 'string' ? quoted.includes(pattern) : pattern.test(quoted)));
+  ].some((pattern) =>
+    typeof pattern === 'string' ? quoted.includes(pattern) : pattern.test(quoted),
+  );
 }
 export async function analyze(text: string, preferences: string): Promise<Analysis> {
   if (!process.env.OPENROUTER_API_KEY || !process.env.OPENROUTER_MODEL)

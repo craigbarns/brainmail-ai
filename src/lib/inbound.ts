@@ -13,7 +13,7 @@ export async function acceptWebhook(request: Request) {
   if (
     process.env.RESEND_INBOUND_ENABLED !== 'true' ||
     !process.env.RESEND_WEBHOOK_SECRET ||
-    !process.env.RESEND_API_KEY
+    !(process.env.RESEND_INBOUND_API_KEY || process.env.RESEND_API_KEY)
   )
     throw new HttpError(503, 'Réception email non activée.');
   const payload = (await limitedBody(request, 256 * 1024)).toString();
@@ -111,7 +111,8 @@ export async function importInbound(job: Row) {
     documentId,
     job.workspace_id,
   ]);
-  if (doc.status !== 'capturing') return;
+  // Deleted by the user meanwhile, or already imported: nothing left to do.
+  if (!doc || doc.status !== 'capturing') return;
   const files: { bytes: Buffer; mime: string }[] = [
     { bytes: Buffer.from(JSON.stringify(email)), mime: 'application/json' },
   ];

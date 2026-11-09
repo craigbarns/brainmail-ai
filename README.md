@@ -58,39 +58,42 @@ Définir `DATABASE_URL=postgresql://brainmail:local-development-only@localhost:5
 
 Toutes les variables sont décrites dans `.env.example`. Aucune clé secrète ne doit avoir le préfixe `NEXT_PUBLIC_`.
 
-| Variable                                           | Usage                                                                                      |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `APP_URL`                                          | Origine exacte de l’application, QR et liens email ; HTTPS en production                   |
-| `DATABASE_URL`                                     | Connexion PostgreSQL privée Railway                                                        |
-| `SIGNUP_EMAIL_ALLOWLIST`                           | Liste d’emails autorisés à créer un compte pendant le pilote                               |
-| `STORAGE_ENCRYPTION_KEY`                           | 32 octets en base64, identiques pour web et worker                                         |
-| `S3_ENDPOINT`, `S3_BUCKET`, `S3_REGION`            | Paramètres du bucket privé Railway                                                         |
-| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`         | Identifiants du bucket, uniquement côté serveur                                            |
-| `MISTRAL_API_KEY`, `MISTRAL_OCR_MODEL`             | OCR ; modèle par défaut `mistral-ocr-latest`                                               |
-| `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`           | Modèle explicitement choisi, compatible `json_schema` et politique `data_collection: deny` |
-| `RESEND_API_KEY`, `RESEND_FROM`                    | Vérification email et rappels, expéditeur sur domaine vérifié                              |
-| `RESEND_INBOUND_ENABLED`                           | `false` jusqu’à validation de la réception et des signatures                               |
-| `RESEND_INBOUND_DOMAIN`                            | Sous-domaine dédié, normalement `in.brainmail.ai`                                          |
-| `RESEND_WEBHOOK_SECRET`                            | Secret du webhook Resend de cet environnement                                              |
-| `RESEND_ATTACHMENT_HOSTS`                          | Liste d’hôtes HTTPS **exacts** observés pour les téléchargements Resend, sans wildcard     |
-| `MEM0_API_KEY`                                     | Mémoire contextuelle optionnelle                                                           |
-| `LOCAL_DEV`, `LOCAL_DB_PATH`, `LOCAL_STORAGE_PATH` | Développement uniquement ; stockage local et PGlite refusés en production                  |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`       | Emplacements réservés ; abonnement et facturation hors MVP actuel                          |
+| Variable                                           | Usage                                                                                           |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `APP_URL`                                          | Origine exacte de l’application, QR et liens email ; HTTPS en production                        |
+| `EXTRA_ORIGINS`                                    | Origines supplémentaires acceptées pour les requêtes navigateur, ex. `https://www.brainmail.ai` |
+| `DATABASE_URL`                                     | Connexion PostgreSQL privée Railway                                                             |
+| `SIGNUP_EMAIL_ALLOWLIST`                           | Liste d’emails autorisés à créer un compte pendant le pilote                                    |
+| `STORAGE_ENCRYPTION_KEY`                           | 32 octets en base64, identiques pour web et worker                                              |
+| `S3_ENDPOINT`, `S3_BUCKET`, `S3_REGION`            | Paramètres du bucket privé Railway                                                              |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`         | Identifiants du bucket, uniquement côté serveur                                                 |
+| `MISTRAL_API_KEY`, `MISTRAL_OCR_MODEL`             | OCR ; modèle par défaut `mistral-ocr-latest`                                                    |
+| `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`           | Modèle explicitement choisi, compatible `json_schema` et politique `data_collection: deny`      |
+| `RESEND_API_KEY`, `RESEND_FROM`                    | Vérification email et rappels, expéditeur sur domaine vérifié                                   |
+| `RESEND_INBOUND_API_KEY`                           | Clé du compte Resend dédié à la réception ; à défaut `RESEND_API_KEY` est utilisée              |
+| `RESEND_INBOUND_ENABLED`                           | `false` jusqu’à validation de la réception et des signatures                                    |
+| `RESEND_INBOUND_DOMAIN`                            | Sous-domaine dédié, normalement `in.brainmail.ai`                                               |
+| `RESEND_WEBHOOK_SECRET`                            | Secret du webhook Resend de cet environnement                                                   |
+| `RESEND_ATTACHMENT_HOSTS`                          | Liste d’hôtes HTTPS **exacts** observés pour les téléchargements Resend, sans wildcard          |
+| `MEM0_API_KEY`                                     | Mémoire contextuelle optionnelle                                                                |
+| `LOCAL_DEV`, `LOCAL_DB_PATH`, `LOCAL_STORAGE_PATH` | Développement uniquement ; stockage local et PGlite refusés en production                       |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`       | Emplacements réservés ; abonnement et facturation hors MVP actuel                               |
 
 Les services externes sont appelés par le worker. Mistral reçoit les fichiers à analyser ; OpenRouter reçoit le texte extrait et le contexte sélectionné. Mem0 ne reçoit pas les courriers. Les restrictions réseau et les choix de modèles devront être validés avec les comptes réellement utilisés.
 
 ## Déploiement Railway
 
-Le dépôt contient un `Dockerfile`, `railway.json` (web), `railway.worker.json` (worker) et les migrations SQL. **La présence de ces fichiers ne signifie pas qu’un déploiement a eu lieu.** Voir [l’état de livraison](docs/DELIVERY.md).
+Le dépôt contient un `Dockerfile` et les migrations SQL. La configuration des services (commande de démarrage, migration préalable, contrôle de santé) est saisie dans les réglages Railway de chaque service, il n’y a plus de fichier `railway.json`. Voir [l’état de livraison](docs/DELIVERY.md).
 
 1. Créer un projet **BRAINMAIL** isolé, choisir une région adaptée, ajouter PostgreSQL et un bucket privé Railway.
-2. Connecter le dépôt GitHub privé au service `web`, branche `main`. Le service utilise `railway.json` : construction Docker, migration préalable, `npm start`, contrôle `/api/health`.
-3. Créer le service `worker` depuis le même dépôt. Choisir **`/railway.worker.json` comme chemin du fichier de configuration Railway**. Il lance `npm run worker` et n’a pas de domaine ni de contrôle HTTP. Les deux migrations sont sérialisées par verrou PostgreSQL.
+2. Service `web` : **Settings → Source**, connecter le dépôt GitHub privé, branche `main`. Construction par le `Dockerfile`, commande de pré-déploiement `npm run db:migrate`, démarrage `npm start`, contrôle de santé `/api/health`.
+3. Service `worker` : même dépôt et même branche, même pré-déploiement, démarrage `npm run worker`, sans domaine ni contrôle HTTP. Les deux migrations sont sérialisées par verrou PostgreSQL. Relier **les deux** services à GitHub : un `railway up` manuel ne laisse aucun commit associé et peut faire tourner web et worker sur deux versions différentes.
 4. Renseigner les variables privées des deux services. `DATABASE_URL` référence la base du projet. Les variables S3 reprennent exactement les valeurs du bucket. Railway utilise des URL virtual-hosted, donc `S3_FORCE_PATH_STYLE=false`. Aucun volume partagé entre web et worker n’est nécessaire.
 5. Générer `STORAGE_ENCRYPTION_KEY` (`openssl rand -base64 32`) et conserver sa sauvegarde sécurisée. Renseigner la **même valeur** pour les deux services. Ne pas réutiliser la clé locale avec de nouvelles données réelles par défaut.
 6. Définir `LOCAL_DEV=false`, `STORAGE_DRIVER=s3`, `APP_URL` sur l’URL HTTPS choisie. Renseigner l’email propriétaire dans `SIGNUP_EMAIL_ALLOWLIST` et les clés Mistral/OpenRouter/Resend. Ne pas activer la réception avant sa configuration complète.
-7. Déployer web et worker. Vérifier les migrations, le statut sain, un HTTP 200 sur `/api/health`, la connexion, un upload réel et son téléchargement, puis le traitement d’un courrier test non confidentiel.
-8. Observer le résultat OCR, le classement, la citation de date, la confirmation d’action, le brouillon et un rappel de test. Une compilation réussie ne valide pas ces services externes.
+7. Service `Postgres` : onglet **Backups**, activer une sauvegarde quotidienne avant toute donnée réelle, puis tester une restauration.
+8. Déployer web et worker. Vérifier les migrations, le statut sain, un HTTP 200 sur `/api/health`, la connexion, un upload réel et son téléchargement, puis le traitement d’un courrier test non confidentiel.
+9. Observer le résultat OCR, le classement, la citation de date, la confirmation d’action, le brouillon et un rappel de test. Une compilation réussie ne valide pas ces services externes.
 
 Le conteneur tourne sous un utilisateur non privilégié. PostgreSQL reste la source de vérité. Le worker se ferme proprement sur SIGTERM. Le pilote utilise une seule réplique web et une seule réplique worker ; le verrouillage des tâches permet d’ajouter des workers, sous réserve de tests de charge et de quotas adaptés.
 
@@ -98,12 +101,12 @@ Le conteneur tourne sous un utilisateur non privilégié. PostgreSQL reste la so
 
 Aucun accès DNS n’est présumé et aucune cible DNS n’est inventée.
 
-| Nom                | Destination prévue                                                                        |
-| ------------------ | ----------------------------------------------------------------------------------------- |
-| `www.brainmail.ai` | Service web, page commerciale `/`                                                         |
-| `app.brainmail.ai` | Service web, application `/app` et connexion `/login`                                     |
-| `api.brainmail.ai` | Même service web pour `/api/health` et `/api/webhooks/resend`, séparation future possible |
-| `in.brainmail.ai`  | Réception email Resend, avec ses propres enregistrements fournis par Resend               |
+| Nom                | Destination prévue                                                          |
+| ------------------ | --------------------------------------------------------------------------- |
+| `www.brainmail.ai` | Service web, page commerciale `/`                                           |
+| `app.brainmail.ai` | Service web, application `/app` et connexion `/login`                       |
+| `api.brainmail.ai` | Facultatif, non configuré aujourd’hui ; séparation future possible          |
+| `in.brainmail.ai`  | Réception email Resend, avec ses propres enregistrements fournis par Resend |
 
 Ajouter chaque domaine HTTP dans les réglages Railway, puis recopier chez le gestionnaire DNS les **CNAME et éventuels enregistrements de validation fournis pour ce service**. Attendre la validation du certificat HTTPS. `APP_URL=https://app.brainmail.ai`. Le navigateur de l’application appelle `/api` sur `app.brainmail.ai` ; les cookies restent limités à cet hôte. `api.brainmail.ai` n’est pas une API publique avec clés clientes et n’expose pas les sessions à d’autres sous-domaines.
 
@@ -111,7 +114,7 @@ Après ajout DNS, vérifier les réponses HTTPS pour les trois noms, les liens d
 
 ### Resend Inboxes et réception
 
-Dans Resend, vérifier les domaines d’envoi et de réception, configurer les enregistrements requis, puis créer un webhook vers `https://api.brainmail.ai/api/webhooks/resend` avec `email.received` et `inbox.email.received`. Copier son secret dans les deux services, activer `RESEND_INBOUND_ENABLED=true`, et activer une boîte dans les préférences de l’espace.
+Dans Resend, vérifier les domaines d’envoi et de réception, configurer les enregistrements requis, puis créer un webhook vers `https://app.brainmail.ai/api/webhooks/resend` (ou `api.brainmail.ai` une fois ce domaine réellement configuré) avec `email.received` et `inbox.email.received`. Copier son secret dans les deux services, activer `RESEND_INBOUND_ENABLED=true`, et activer une boîte dans les préférences de l’espace.
 
 Les pièces jointes sont téléchargées uniquement depuis les hôtes exacts configurés dans `RESEND_ATTACHMENT_HOSTS`, sans redirection. Ne jamais autoriser un hôte fourni directement par un expéditeur. Les pièces jointes Office, archives et fichiers exécutables sont refusés ; l’échec apparaît dans les tâches de réception. L’intégration Inboxes utilise l’API de récupération des pièces jointes reçues par `email_id` : ce point doit être validé avec un email réel du compte Resend avant activation du pilote. Les emails uniquement HTML sont conservés comme originaux JSON mais l’analyse du corps nécessite une version texte ; aucune page HTML non fiable n’est affichée.
 

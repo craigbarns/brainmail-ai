@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { connection } from 'next/server';
 import {
   ArrowUpRight,
   ScanLine,
@@ -8,7 +9,11 @@ import {
   ArrowRight,
   Mail,
 } from 'lucide-react';
-export default function Home() {
+export default async function Home() {
+  // APP_URL exists only at runtime on Railway, not during the Docker build:
+  // render per request so the links target the application domain.
+  await connection();
+  const app = process.env.APP_URL || '';
   return (
     <main className="landing">
       <header className="landing-nav">
@@ -18,7 +23,7 @@ export default function Home() {
           </span>
           BRAINMAIL<span className="brand-ai">.ai</span>
         </Link>
-        <Link href={`${process.env.APP_URL || ''}/login`} className="button secondary">
+        <Link href={`${app}/login`} className="button secondary">
           Se connecter <ArrowUpRight size={16} />
         </Link>
       </header>
@@ -37,7 +42,7 @@ export default function Home() {
             <br />
             BRAINMAIL vous aide à comprendre, classer et préparer la suite.
           </p>
-          <Link href={`${process.env.APP_URL || ''}/login?register=1`} className="button">
+          <Link href={`${app}/login?register=1`} className="button">
             Créer mon espace <ArrowRight size={18} />
           </Link>
           <p className="subtle">Un espace privé pour chacune de vos sociétés.</p>
