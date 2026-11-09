@@ -65,6 +65,51 @@ export async function ocr(bytes: Buffer, mime: string) {
     .pages.map((p) => p.markdown)
     .join('\n\n--- PAGE ---\n\n');
 }
+const MONTHS_FR = [
+  'janvier',
+  'février',
+  'mars',
+  'avril',
+  'mai',
+  'juin',
+  'juillet',
+  'août',
+  'septembre',
+  'octobre',
+  'novembre',
+  'décembre',
+];
+const MONTHS_ABBR = [
+  'jan',
+  'fév',
+  'mars',
+  'avr',
+  'mai',
+  'juin',
+  'juil',
+  'août',
+  'sept',
+  'oct',
+  'nov',
+  'déc',
+];
+// A deadline only counts if the quoted passage actually contains that date.
+export function dateSupported(dueDate: string | null, evidence: string): boolean {
+  if (!dueDate || !/^\d{4}-\d{2}-\d{2}$/.test(dueDate) || !evidence) return false;
+  const day = String(Number(dueDate.slice(8, 10)));
+  const dayPadded = dueDate.slice(8, 10);
+  const month = String(Number(dueDate.slice(5, 7)));
+  const monthPadded = dueDate.slice(5, 7);
+  const name = MONTHS_FR[Number(month) - 1];
+  const abbr = MONTHS_ABBR[Number(month) - 1];
+  const quoted = evidence.toLowerCase().replace(/\u00a0/g, ' ').replace(/1er\b/g, '1');
+  if (quoted.includes(dueDate)) return true;
+  return [
+    new RegExp(`\\b(?:${day}|${dayPadded})\\s*[/\\-.]\\s*(?:${month}|${monthPadded})\\b`),
+    new RegExp(`\\b(?:${day}|${dayPadded})(?:er)?\\s+(?:${name}|${abbr})`, 'u'),
+    dueDate,
+  ].some((pattern) => (typeof pattern === 'string' ? quoted.includes(pattern) : pattern.test(quoted)));
+}
 export async function analyze(text: string, preferences: string): Promise<Analysis> {
   if (!process.env.OPENROUTER_API_KEY || !process.env.OPENROUTER_MODEL)
     throw new HttpError(503, 'OpenRouter non configuré.');
@@ -99,10 +144,14 @@ export async function analyze(text: string, preferences: string): Promise<Analys
   });
   const content = result.choices?.[0]?.message?.content;
   const parsed = analysisSchema.parse(JSON.parse(typeof content === 'string' ? content : '{}'));
-  // An ungrounded deadline cannot become a dated action.
+  // An ungrounded deadline cannot become a dated action: the quote must
+  // actually contain the announced date, not merely exist somewhere in the text.
   parsed.actions = parsed.actions.map((a) => ({
     ...a,
-    dueDate: a.evidence && text.includes(a.evidence) ? a.dueDate : null,
+    dueDate:
+      a.evidence && text.includes(a.evidence) && dateSupported(a.dueDate, a.evidence)
+        ? a.dueDate
+        : null,
   }));
   return parsed;
 }

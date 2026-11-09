@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import QRCode from 'qrcode';
 import { z } from 'zod';
 import { Resend } from 'resend';
@@ -22,6 +22,7 @@ import {
   appendFile,
   finalizeDocument,
   documentDetail,
+  deleteDocument,
   enqueue,
 } from './documents';
 import { getFile, MAX_FILE } from './storage';
@@ -92,7 +93,11 @@ async function route(request: Request): Promise<Response> {
       return json({ ok: true });
     }
     const c = credentials.parse(b);
+    const ip = (request.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'local';
     await rateLimit(`auth:${c.email}`, 10);
+    // Also capped per source IP: one address cannot lock out a customer or
+    // brute-force many accounts through the per-email limit alone.
+    await rateLimit(`auth-ip:${ip}`, 60);
     if (parts[1] === 'register') {
       const name = z.string().min(2).max(80).parse(b.name);
       const { token } = await register(c.email, c.password, name);
@@ -233,13 +238,17 @@ async function route(request: Request): Promise<Response> {
       !process.env.RESEND_INBOUND_DOMAIN
     )
       throw new HttpError(503, 'Resend Inboxes non configuré.');
-    // Deterministic unguessable address; caller cannot bind another workspace’s address.
-    const address = `${ws}@${process.env.RESEND_INBOUND_DOMAIN}`;
-    await transaction(async (db) => {
+    // Random per-workspace address: a leaked address can be rotated, and the
+    // caller cannot bind another workspace’s address.
+    const rotate = Boolean((await body(request)).rotate);
+    const address = `bm.${randomBytes(8).toString('hex')}@${process.env.RESEND_INBOUND_DOMAIN}`;
+    const provisioned = await transaction(async (db) => {
       const {
         rows: [w],
-      } = await db.query('SELECT inbox_id FROM workspaces WHERE id=$1 FOR UPDATE', [ws]);
-      if (w.inbox_id) return;
+      } = await db.query('SELECT inbox_address,inbox_id FROM workspaces WHERE id=$1 FOR UPDATE', [
+        ws,
+      ]);
+      if (w.inbox_address && !rotate) return { address: w.inbox_address, rotated: false };
       const resend = new Resend(process.env.RESEND_API_KEY!);
       let { data, error } = await resend.inboxes.get(address);
       let id = data?.id;
@@ -258,8 +267,9 @@ async function route(request: Request): Promise<Response> {
         id,
         ws,
       ]);
+      return { address, rotated: Boolean(w.inbox_address) };
     });
-    return json({ address });
+    return json(provisioned);
   }
   if (parts[0] === 'scans') {
     if (method === 'POST' && !parts[1]) {
@@ -285,7 +295,8 @@ async function route(request: Request): Promise<Response> {
     if (method === 'GET')
       return json({ ...scan, document: await documentDetail(ws, scan.document_id) });
     if (method === 'DELETE') {
-      await query('UPDATE scans SET expires_at=now() WHERE id=$1 AND workspace_id=$2', [id, ws]);
+      // Revoking a QR removes the abandoned capture entirely.
+      await deleteDocument(ws, scan.document_id);
       return json({ ok: true });
     }
   }
@@ -313,6 +324,12 @@ async function route(request: Request): Promise<Response> {
     }
     if (parts[2] === 'complete' && method === 'POST') {
       await finalizeDocument(ws, id);
+      return json({ ok: true });
+    }
+    if (!parts[2] && method === 'DELETE') {
+      // Permanent deletion of the document and its files (RGPD erasure).
+      await rateLimit(`delete:${user.userId}`, 60, 3600);
+      await deleteDocument(ws, id);
       return json({ ok: true });
     }
     if (parts[2] === 'retry' && method === 'POST') {
@@ -372,7 +389,7 @@ async function route(request: Request): Promise<Response> {
     if (method === 'GET')
       return json(
         await query(
-          "SELECT a.*,to_char(a.due_date,'YYYY-MM-DD') AS due_date,d.title FROM actions a JOIN documents d ON d.id=a.document_id AND d.workspace_id=a.workspace_id WHERE a.workspace_id=$1 ORDER BY a.due_date NULLS LAST",
+          "SELECT a.*,to_char(a.due_date,'YYYY-MM-DD') AS due_date,d.title FROM actions a JOIN documents d ON d.id=a.document_id AND d.workspace_id=a.workspace_id WHERE a.workspace_id=$1 ORDER BY a.due_date NULLS LAST LIMIT 500",
           [ws],
         ),
       );

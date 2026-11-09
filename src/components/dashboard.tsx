@@ -22,6 +22,7 @@ import {
   FolderOpen,
   Download,
   Copy,
+  Trash2,
 } from 'lucide-react';
 import { api, post, patch, formatDate } from './client';
 type Data = Record<string, any>;
@@ -57,13 +58,18 @@ export function Dashboard() {
   }, [view, search]);
   useEffect(() => {
     void refresh().catch((e) => setError(e.message));
-    const id = setInterval(() => void refresh().catch((e) => setError(e.message)), 5000);
+    const id = setInterval(() => {
+      // A hidden tab does not need live data; skip the round-trips.
+      if (document.hidden) return;
+      void refresh().catch((e) => setError(e.message));
+    }, 15000);
     return () => clearInterval(id);
   }, [refresh]);
   useEffect(() => {
     if (!scan?.id) return;
     let stopped = false;
     const id = setInterval(async () => {
+      if (document.hidden) return;
       try {
         const state = await api(`scans/${scan.id}`);
         if (!stopped) setScan((s) => (s ? { ...s, ...state } : null));
@@ -946,6 +952,20 @@ function DocumentPanel({
             </details>
           </>
         )}
+        <button
+          className="button secondary"
+          onClick={() => {
+            if (!confirm('Supprimer ce courrier et tous ses fichiers ? Action définitive.'))
+              return;
+            void task(async () => {
+              await api(`documents/${d.id}`, { method: 'DELETE' });
+              close();
+            });
+          }}
+        >
+          <Trash2 size={15} />
+          Supprimer ce courrier
+        </button>
       </section>
     </div>
   );

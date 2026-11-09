@@ -1,7 +1,7 @@
 import { loadEnvConfig } from '@next/env';
 loadEnvConfig(process.cwd());
 async function main() {
-  const { workOnce, remindersOnce } = await import('../src/lib/worker');
+  const { workOnce, remindersOnce, maintenanceMaybe } = await import('../src/lib/worker');
   const { database } = await import('../src/lib/db');
   let stop = false;
   process.on('SIGTERM', () => {
@@ -16,6 +16,7 @@ async function main() {
       const worked = await workOnce();
       if (Date.now() - lastReminder > 60000) {
         await remindersOnce();
+        await maintenanceMaybe();
         lastReminder = Date.now();
       }
       if (!worked) await new Promise((r) => setTimeout(r, 2000));

@@ -187,30 +187,53 @@ export async function remindersOnce() {
       'INSERT INTO reminders(id,action_id,user_id,due_date) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING',
       [randomUUID(), a.id, a.user_id, a.due_date],
     );
-  await transaction(async (db) => {
-    const {
-      rows: [r],
-    } = await db.query(
-      `SELECT r.*,u.email FROM reminders r JOIN users u ON u.id=r.user_id JOIN actions a ON a.id=r.action_id JOIN memberships m ON m.user_id=r.user_id AND m.workspace_id=a.workspace_id WHERE r.state='pending' AND r.created_at>now()-interval '23 hours' AND a.confirmed AND NOT a.done AND a.due_date=r.due_date AND u.verified ORDER BY r.created_at FOR UPDATE OF r SKIP LOCKED LIMIT 1`,
-    );
-    if (!r) return;
-    const { data, error } = await new Resend(process.env.RESEND_API_KEY).emails.send(
-      {
-        from: process.env.RESEND_FROM!,
-        to: r.email,
-        subject: 'BRAINMAIL · Une échéance approche',
-        text: `Une action confirmée arrive à échéance. Consultez votre espace sécurisé : ${process.env.APP_URL}/app`,
-      },
-      { idempotencyKey: `reminder:${r.id}` },
-    );
-    if (error) throw new Error('Envoi du rappel indisponible.');
-    await db.query("UPDATE reminders SET state='sent',provider_id=$1 WHERE id=$2", [
-      data?.id,
-      r.id,
-    ]);
-  });
+  // A batch of ten per cycle keeps the platform well above one email per minute.
+  for (let batch = 0; batch < 10; batch++) {
+    const sent = await transaction(async (db) => {
+      const {
+        rows: [r],
+      } = await db.query(
+        `SELECT r.*,u.email FROM reminders r JOIN users u ON u.id=r.user_id JOIN actions a ON a.id=r.action_id JOIN memberships m ON m.user_id=r.user_id AND m.workspace_id=a.workspace_id WHERE r.state='pending' AND r.created_at>now()-interval '23 hours' AND a.confirmed AND NOT a.done AND a.due_date=r.due_date AND u.verified ORDER BY r.created_at FOR UPDATE OF r SKIP LOCKED LIMIT 1`,
+      );
+      if (!r) return false;
+      const { data, error } = await new Resend(process.env.RESEND_API_KEY).emails.send(
+        {
+          from: process.env.RESEND_FROM!,
+          to: r.email,
+          subject: 'BRAINMAIL · Une échéance approche',
+          text: `Une action confirmée arrive à échéance. Consultez votre espace sécurisé : ${process.env.APP_URL}/app`,
+        },
+        { idempotencyKey: `reminder:${r.id}` },
+      );
+      if (error) throw new Error('Envoi du rappel indisponible.');
+      await db.query("UPDATE reminders SET state='sent',provider_id=$1 WHERE id=$2", [
+        data?.id,
+        r.id,
+      ]);
+      return true;
+    });
+    if (!sent) break;
+  }
   // Outside Resend's 24h deduplication window, stop and require review, never risk a duplicate send.
   await query(
     "UPDATE reminders SET state='needs_review' WHERE state='pending' AND created_at<now()-interval '23 hours'",
   );
+}
+export async function cleanupOnce() {
+  // Expired credentials, counters, captures and terminal jobs must not
+  // accumulate forever (sessions keep email hashes, jobs keep event payloads).
+  await query("DELETE FROM sessions WHERE expires_at<now()-interval '7 days'");
+  await query("DELETE FROM verification_tokens WHERE expires_at<now()-interval '1 day'");
+  await query("DELETE FROM rate_limits WHERE resets_at<now()");
+  await query("DELETE FROM scans WHERE expires_at<now()-interval '1 day'");
+  await query("DELETE FROM jobs WHERE state='done' AND created_at<now()-interval '30 days'");
+  await query(
+    "DELETE FROM reminders WHERE state IN ('sent','needs_review') AND created_at<now()-interval '90 days'",
+  );
+}
+let lastCleanup = 0;
+export async function maintenanceMaybe() {
+  if (Date.now() - lastCleanup < 3600_000) return;
+  lastCleanup = Date.now();
+  await cleanupOnce();
 }

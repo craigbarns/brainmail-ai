@@ -173,3 +173,23 @@ export async function documentDetail(
   );
   return { ...document, files, actions };
 }
+// Permanent deletion of a document and its files, including abandoned
+// captures: no orphan rows or encrypted objects may survive (RGPD erasure).
+export async function deleteDocument(workspaceId: string, documentId: string) {
+  const files = await query(
+    'SELECT storage_key FROM document_files WHERE document_id=$1 AND workspace_id=$2',
+    [documentId, workspaceId],
+  );
+  await transaction(async (db) => {
+    const { rows } = await db.query(
+      'DELETE FROM documents WHERE id=$1 AND workspace_id=$2 RETURNING id',
+      [documentId, workspaceId],
+    );
+    if (!rows.length) throw new HttpError(404, 'Courrier introuvable.');
+    await db.query(
+      "UPDATE jobs SET state='failed',last_error='Courrier supprimé.',lease_until=NULL WHERE workspace_id=$1 AND dedup_key=$2 AND state IN ('queued','running')",
+      [workspaceId, `analyze:${documentId}`],
+    );
+  });
+  await Promise.allSettled(files.map((f) => deleteFile(f.storage_key)));
+}

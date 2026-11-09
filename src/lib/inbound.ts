@@ -35,10 +35,17 @@ export async function acceptWebhook(request: Request) {
       (event.data.received_for || []).map((s) => s.toLowerCase()),
     ]);
   // Route only to a provisioned, exact inbox. Never accept a tenant ID supplied by a sender.
-  for (const ws of workspaces)
+  for (const ws of workspaces) {
+    // Daily cap per workspace: a leaked address cannot trigger unbounded paid analysis.
+    const [quota] = await query<{ n: number }>(
+      "SELECT count(*)::int AS n FROM jobs WHERE workspace_id=$1 AND kind='inbound' AND created_at>now()-interval '24 hours'",
+      [ws.id],
+    );
+    if (quota.n >= 50) continue;
     await transaction((db) =>
       enqueue(db, ws.id, 'inbound', event, `inbound:${ws.id}:${event.data.email_id}`),
     );
+  }
 }
 async function downloadAttachment(url: string) {
   const parsed = new URL(url);

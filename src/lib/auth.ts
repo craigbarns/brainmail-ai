@@ -26,9 +26,19 @@ export async function authenticate(request: Request): Promise<Identity> {
   };
 }
 export async function register(email: string, password: string, name: string) {
-  const allow = (process.env.SIGNUP_EMAIL_ALLOWLIST || '').toLowerCase().split(',');
-  if (process.env.NODE_ENV === 'production' && !allow.includes(email))
+  // The allowlist applies as soon as it is defined; in production it is mandatory.
+  const allowSetting = process.env.SIGNUP_EMAIL_ALLOWLIST;
+  if (allowSetting !== undefined && allowSetting !== '') {
+    const allow = allowSetting
+      .toLowerCase()
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!allow.includes(email))
+      throw new HttpError(403, 'Les inscriptions sont sur invitation pour cette version pilote.');
+  } else if (process.env.NODE_ENV === 'production') {
     throw new HttpError(403, 'Les inscriptions sont sur invitation pour cette version pilote.');
+  }
   const id = randomUUID(),
     workspace = randomUUID(),
     token = secret();

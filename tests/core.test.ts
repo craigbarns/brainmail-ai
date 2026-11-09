@@ -454,3 +454,104 @@ test('crash après la dernière tentative : le courrier devient relançable', as
   const d = await documentDetail(a.ws, s.documentId);
   assert.equal(d.status, 'failed');
 });
+test('liste d’invitation : espaces et casse tolérés, hors liste refusée', async () => {
+  process.env.SIGNUP_EMAIL_ALLOWLIST = ' Owner@Example.test , Gamma@Example.test  ';
+  try {
+    assert.equal(
+      (
+        await request('auth/register', 'POST', {
+          email: 'gamma@example.test',
+          password: 'a-long-test-password!',
+          name: 'Gamma',
+        })
+      ).status,
+      201,
+    );
+    assert.equal(
+      (
+        await request('auth/register', 'POST', {
+          email: 'outsider@example.test',
+          password: 'a-long-test-password!',
+          name: 'Hors liste',
+        })
+      ).status,
+      403,
+    );
+  } finally {
+    delete process.env.SIGNUP_EMAIL_ALLOWLIST;
+  }
+});
+test('suppression définitive d’un courrier, fichiers et capture abandonnée', async () => {
+  const s = await createScan(a.ws);
+  await appendFile(a.ws, s.documentId, jpg, s.id);
+  assert.equal(
+    (await request(`scans/${s.id}`, 'DELETE', undefined, b.cookie)).status,
+    404,
+  );
+  assert.equal((await request(`scans/${s.id}`, 'DELETE', undefined, a.cookie)).status, 200);
+  const list = await request('documents', 'GET', undefined, a.cookie);
+  assert.equal(list.data.some((x: Record<string, any>) => x.id === s.documentId), false);
+  const detail = await request(`documents/${s.documentId}`, 'GET', undefined, a.cookie);
+  assert.equal(detail.status, 404);
+});
+test('échéance rejetée si la citation ne contient pas la date annoncée', async () => {
+  const old = globalThis.fetch;
+  process.env.OPENROUTER_API_KEY = 'test-only';
+  process.env.OPENROUTER_MODEL = 'test/model';
+  try {
+    globalThis.fetch = async () =>
+      Response.json({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                ...output,
+                actions: [
+                  {
+                    label: 'Date cohérente',
+                    dueDate: '2026-12-15',
+                    evidence: 'Avant le 15 décembre 2026',
+                  },
+                  {
+                    label: 'Date non justifiée',
+                    dueDate: '2027-01-31',
+                    evidence: 'Avant le 15 décembre 2026',
+                  },
+                  { label: 'Format numérique', dueDate: '2026-12-15', evidence: 'échéance : 15/12/2026' },
+                  { label: 'Sans citation', dueDate: '2026-12-15', evidence: '' },
+                ],
+              }),
+            },
+          },
+        ],
+      });
+    const text = 'Cotisation 2026. échéance : 15/12/2026. Avant le 15 décembre 2026';
+    const result = await analyze(text, '');
+    const byLabel = Object.fromEntries(result.actions.map((x) => [x.label, x.dueDate]));
+    assert.equal(byLabel['Date cohérente'], '2026-12-15');
+    assert.equal(byLabel['Date non justifiée'], null);
+    assert.equal(byLabel['Format numérique'], '2026-12-15');
+    assert.equal(byLabel['Sans citation'], null);
+  } finally {
+    globalThis.fetch = old;
+    delete process.env.OPENROUTER_API_KEY;
+    delete process.env.OPENROUTER_MODEL;
+  }
+});
+test('nettoyage : sessions, compteurs et captures expirés supprimés', async () => {
+  await query("INSERT INTO rate_limits(key,count,resets_at) VALUES('brainmail-stale',1,now()-interval '2 hours')");
+  const [existing] = await query<{ user_id: string; workspace_id: string }>(
+    'SELECT user_id,workspace_id FROM sessions LIMIT 1',
+  );
+  await query(
+    "INSERT INTO sessions(token_hash,user_id,workspace_id,expires_at) VALUES('stale-token',$1,$2,now()-interval '8 days')",
+    [existing.user_id, existing.workspace_id],
+  );
+  const stale = await createScan(a.ws);
+  await query("UPDATE scans SET expires_at=now()-interval '2 days' WHERE id=$1", [stale.id]);
+  const { cleanupOnce } = await import('../src/lib/worker');
+  await cleanupOnce();
+  assert.equal((await query("SELECT 1 FROM rate_limits WHERE key='brainmail-stale'")).length, 0);
+  assert.equal((await query("SELECT 1 FROM sessions WHERE token_hash='stale-token'")).length, 0);
+  assert.equal((await query('SELECT 1 FROM scans WHERE id=$1', [stale.id])).length, 0);
+});

@@ -8,7 +8,7 @@ export async function register() {
     await migrate();
     const g = globalThis as typeof globalThis & { brainWorker?: ReturnType<typeof setInterval> };
     if (!g.brainWorker) {
-      const { workOnce, remindersOnce } = await import('./lib/worker');
+      const { workOnce, remindersOnce, maintenanceMaybe } = await import('./lib/worker');
       let busy = false;
       g.brainWorker = setInterval(async () => {
         if (busy) return;
@@ -16,6 +16,7 @@ export async function register() {
         try {
           await workOnce();
           await remindersOnce();
+          await maintenanceMaybe();
         } catch {
           console.error('worker_cycle_failed');
         } finally {

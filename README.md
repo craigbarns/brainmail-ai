@@ -40,18 +40,18 @@ Définir `DATABASE_URL=postgresql://brainmail:local-development-only@localhost:5
 
 ## Fonctionnalités livrées
 
-- Inscription, connexion, déconnexion, mots de passe scrypt avec sel aléatoire ; vérification d’email en production. Inscriptions de production limitées à `SIGNUP_EMAIL_ALLOWLIST`.
+- Inscription, connexion, déconnexion, mots de passe scrypt avec sel aléatoire ; vérification d’email en production. `SIGNUP_EMAIL_ALLOWLIST` s’applique dès qu’il est défini (espaces et casse tolérés) et reste obligatoire en production.
 - Plusieurs sociétés par utilisateur, création et changement d’espace, contrôle d’appartenance à chaque requête. Chaque document, fichier, action et tâche est rattaché à un espace.
 - Capture sécurisée : secret 256 bits placé dans le fragment du lien QR, empreinte stockée en base, association atomique à un seul téléphone, expiration de 15 minutes, révocation et finalisation depuis l’ordinateur. Le téléphone ne peut pas lire les courriers.
 - Photos JPEG/PNG/WebP, décodées et réencodées sans métadonnées GPS ; PDF lisibles de 20 pages maximum. 15 Mo par fichier, 20 fichiers et 50 Mo par courrier. Les originaux photo sont normalisés en JPEG ; ce produit n’est pas un système d’archivage probant.
 - Stockage AES-256-GCM côté application, données authentifiées liées à l’espace/document/fichier, bucket privé. Aucun lien public aux originaux. Téléchargement par une route authentifiée.
-- Dashboard, recherche sur titre/expéditeur/résumé/dossier, classement éditable, dossiers, archive et désarchivage.
+- Dashboard, recherche sur titre/expéditeur/résumé/dossier, classement éditable, dossiers, archive et désarchivage. **Suppression définitive** d’un courrier et de ses fichiers (droit à l’effacement RGPD) ; la révocation d’un QR supprime aussi la capture abandonnée.
 - OCR Mistral puis JSON structuré OpenRouter validé côté serveur. Le texte documentaire est traité comme donnée non fiable. Pas de navigation vers les liens du courrier, de paiement ni d’envoi autonome.
 - Calendrier mensuel et actions éditables. Une date sans citation correspondante est retirée ; toutes les actions nécessitent confirmation humaine avant rappels. Dates sans heure, rappel selon Europe/Paris.
 - Réponse éditable, validation explicite et copie. Toute modification dans l’éditeur retire la validation. **Aucun envoi de réponse automatique.**
-- Worker PostgreSQL durable : prise exclusive des tâches, bail renouvelable, protection contre les workers obsolètes, quatre tentatives maximum, délais exponentiels, relance depuis l’interface, conservation du texte OCR entre reprises.
-- Rappels Resend aux membres vérifiés, seulement pour les actions confirmées non terminées dont l’échéance est aujourd’hui ou demain. Email générique sans contenu du courrier. Déduplication en base et clé d’idempotence Resend ; après 23 heures d’incertitude, revue manuelle plutôt qu’un renvoi risqué.
-- Réception Resend / Inboxes derrière un indicateur d’activation : webhook signé, boîte exacte rattachée à la société, déduplication par email, récupération du contenu et des pièces jointes, même pipeline documentaire. Provisionnement d’une adresse aléatoire par espace, actions de l’agent Resend désactivées.
+- Worker PostgreSQL durable : prise exclusive des tâches, bail renouvelable, protection contre les workers obsolètes, quatre tentatives maximum, délais exponentiels, relance depuis l’interface, conservation du texte OCR entre reprises. Nettoyage horaire des sessions, tokens, compteurs, captures et jobs terminés expirés.
+- Rappels Resend aux membres vérifiés, seulement pour les actions confirmées non terminées dont l’échéance est aujourd’hui ou demain, par lot de dix par minute. Email générique sans contenu du courrier. Déduplication en base et clé d’idempotence Resend ; après 23 heures d’incertitude, revue manuelle plutôt qu’un renvoi risqué. Les tentatives de connexion sont limitées par email **et par IP**.
+- Réception Resend / Inboxes derrière un indicateur d’activation : webhook signé, boîte exacte rattachée à la société, déduplication par email, récupération du contenu et des pièces jointes, même pipeline documentaire. Provisionnement d’une adresse aléatoire par espace, **changeable** si divulguée, et quota de 50 réceptions/jour/espace pour borner les analyses déclenchées, actions de l’agent Resend désactivées.
 - Mem0 facultatif : synchronisation des seules préférences explicites, espace isolé par `user_id`, recherche de contexte. Les souvenirs dont l’empreinte ne correspond pas aux préférences PostgreSQL actuelles sont ignorés. Une panne Mem0 ne bloque pas l’analyse. Désactiver arrête les échanges futurs ; la suppression distante reste une opération de gestion à prévoir.
 
 ## Configuration
