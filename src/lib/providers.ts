@@ -145,11 +145,19 @@ export async function analyze(text: string, preferences: string): Promise<Analys
   const content = result.choices?.[0]?.message?.content;
   const parsed = analysisSchema.parse(JSON.parse(typeof content === 'string' ? content : '{}'));
   // An ungrounded deadline cannot become a dated action: the quote must
-  // actually contain the announced date, not merely exist somewhere in the text.
+  // actually contain the announced date, not merely exist somewhere in the
+  // text. Apostrophe and spacing variants must not void a genuine quote.
+  const norm = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[\u2019\u2018`]/g, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  const textNorm = norm(text);
   parsed.actions = parsed.actions.map((a) => ({
     ...a,
     dueDate:
-      a.evidence && text.includes(a.evidence) && dateSupported(a.dueDate, a.evidence)
+      a.evidence && textNorm.includes(norm(a.evidence)) && dateSupported(a.dueDate, a.evidence)
         ? a.dueDate
         : null,
   }));

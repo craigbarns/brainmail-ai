@@ -518,6 +518,11 @@ test('échéance rejetée si la citation ne contient pas la date annoncée', asy
                     evidence: 'Avant le 15 décembre 2026',
                   },
                   { label: 'Format numérique', dueDate: '2026-12-15', evidence: 'échéance : 15/12/2026' },
+                  {
+                    label: 'Apostrophe variante',
+                    dueDate: '2026-12-15',
+                    evidence: 'Vous disposez d’un délai jusqu’au 15 décembre 2026',
+                  },
                   { label: 'Sans citation', dueDate: '2026-12-15', evidence: '' },
                 ],
               }),
@@ -525,12 +530,13 @@ test('échéance rejetée si la citation ne contient pas la date annoncée', asy
           },
         ],
       });
-    const text = 'Cotisation 2026. échéance : 15/12/2026. Avant le 15 décembre 2026';
+    const text = "Cotisation 2026. échéance : 15/12/2026. Avant le 15 décembre 2026. Vous disposez d un délai jusqu au 15 décembre 2026.";
     const result = await analyze(text, '');
     const byLabel = Object.fromEntries(result.actions.map((x) => [x.label, x.dueDate]));
     assert.equal(byLabel['Date cohérente'], '2026-12-15');
     assert.equal(byLabel['Date non justifiée'], null);
     assert.equal(byLabel['Format numérique'], '2026-12-15');
+    assert.equal(byLabel['Apostrophe variante'], '2026-12-15');
     assert.equal(byLabel['Sans citation'], null);
   } finally {
     globalThis.fetch = old;
