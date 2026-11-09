@@ -610,7 +610,21 @@ function Preferences({
         )}
         <h3>Votre adresse de réception</h3>
         {me.workspace.inbox_address ? (
-          <p className="inbox-address">{me.workspace.inbox_address}</p>
+          <>
+            <p className="inbox-address">{me.workspace.inbox_address}</p>
+            <button
+              className="button secondary small"
+              onClick={() => {
+                if (!confirm('Changer cette adresse ? Les emails envoyés à l’ancienne adresse seront ignorés.')) return;
+                void task(async () => {
+                  await post('inbox', { rotate: true });
+                  setNotice('Nouvelle adresse de réception créée. L’ancienne est ignorée.');
+                });
+              }}
+            >
+              Changer cette adresse
+            </button>
+          </>
         ) : (
           <>
             <p className="subtle">
