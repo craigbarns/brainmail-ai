@@ -249,7 +249,8 @@ async function route(request: Request): Promise<Response> {
         ws,
       ]);
       if (w.inbox_address && !rotate) return { address: w.inbox_address, rotated: false };
-      const resend = new Resend(process.env.RESEND_API_KEY!);
+      const { inboundResend } = await import('./inbound');
+      const resend = inboundResend();
       let { data, error } = await resend.inboxes.get(address);
       let id = data?.id;
       if (!id) {

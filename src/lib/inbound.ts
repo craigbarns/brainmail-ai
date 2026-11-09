@@ -4,6 +4,11 @@ import { query, transaction, type Row } from './db';
 import { enqueue } from './documents';
 import { HttpError, limitedBody } from './security';
 import { putFile, deleteFile, validateFile, MAX_FILE } from './storage';
+// Reception lives in its own Resend account; sending (verification, reminders)
+// keeps using RESEND_API_KEY unless a dedicated inbound key is configured.
+export function inboundResend() {
+  return new Resend(process.env.RESEND_INBOUND_API_KEY || process.env.RESEND_API_KEY!);
+}
 export async function acceptWebhook(request: Request) {
   if (
     process.env.RESEND_INBOUND_ENABLED !== 'true' ||
@@ -14,7 +19,7 @@ export async function acceptWebhook(request: Request) {
   const payload = (await limitedBody(request, 256 * 1024)).toString();
   let event;
   try {
-    event = new Resend(process.env.RESEND_API_KEY).webhooks.verify({
+    event = inboundResend().webhooks.verify({
       payload,
       headers: {
         id: request.headers.get('svix-id') || '',
@@ -70,7 +75,7 @@ async function downloadAttachment(url: string) {
   );
 }
 export async function importInbound(job: Row) {
-  const resend = new Resend(process.env.RESEND_API_KEY!);
+  const resend = inboundResend();
   const event = job.payload;
   const emailId = event.data.email_id;
   const response =
