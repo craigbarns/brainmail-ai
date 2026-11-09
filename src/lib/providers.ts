@@ -147,10 +147,12 @@ export async function analyze(text: string, preferences: string): Promise<Analys
   // An ungrounded deadline cannot become a dated action: the quote must
   // actually contain the announced date, not merely exist somewhere in the
   // text. Apostrophe and spacing variants must not void a genuine quote.
+  // OCR and LLM quotes disagree on apostrophes: « d'un » is written « d un »
+  // in extracted text. Normalize apostrophes to spaces on both sides.
   const norm = (s: string) =>
     s
       .toLowerCase()
-      .replace(/[\u2019\u2018`]/g, "'")
+      .replace(/[\u2019\u2018'`]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
   const textNorm = norm(text);
