@@ -449,6 +449,30 @@ test('mémoire : filtre par société et rejet des préférences obsolètes', as
     delete process.env.MEM0_API_KEY;
   }
 });
+test('dossiers : création, rattachement, cycle de vie et isolation', async () => {
+  const d = await request('documents', 'POST', undefined, a.cookie);
+  const id = d.data.id;
+  const cr = await request('dossiers', 'POST', { label: 'Dossier URSSAF 2027', documentId: id }, a.cookie);
+  assert.equal(cr.status, 201);
+  // isolation : l'espace de b ne voit pas le dossier de a
+  assert.equal((await request('dossiers', 'GET', undefined, b.cookie)).data.length, 0);
+  const list = await request('dossiers', 'GET', undefined, a.cookie);
+  assert.equal(list.data[0].docs, 1);
+  assert.equal(list.data[0].label, 'Dossier URSSAF 2027');
+  // rattachement à un dossier d'un autre espace : refusé
+  const nope = await request(`documents/${id}/dossier`, 'PUT', { dossierId: randomUUID() }, a.cookie);
+  assert.equal(nope.status, 404);
+  // détail du courrier : le dossier est exposé
+  const det = await request(`documents/${id}`, 'GET', undefined, a.cookie);
+  assert.equal(det.data.dossier.label, 'Dossier URSSAF 2027');
+  // cycle de vie
+  assert.equal((await request(`dossiers/${cr.data.id}`, 'PATCH', { status: 'resolu' }, a.cookie)).status, 200);
+  assert.equal((await request(`dossiers/${cr.data.id}`, 'PATCH', { status: 'resolu' }, b.cookie)).status, 404);
+  // détachement
+  const det2 = await request(`documents/${id}/dossier`, 'PUT', { dossierId: null }, a.cookie);
+  assert.equal(det2.status, 200);
+  assert.equal(det2.data.dossier, null);
+});
 test('crash après la dernière tentative : le courrier devient relançable', async () => {
   const s = await createScan(a.ws);
   await appendFile(a.ws, s.documentId, jpg);

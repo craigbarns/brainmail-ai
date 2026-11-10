@@ -171,7 +171,11 @@ export async function documentDetail(
     "SELECT *,to_char(due_date,'YYYY-MM-DD') AS due_date FROM actions WHERE document_id=$1 AND workspace_id=$2 ORDER BY actions.due_date NULLS LAST",
     [id, workspaceId],
   );
-  return { ...document, files, actions };
+  const [dossier] = await query(
+    'SELECT d.id,d.label,d.status FROM dossiers d JOIN documents doc ON doc.dossier_id=d.id WHERE doc.id=$1 AND doc.workspace_id=$2',
+    [id, workspaceId],
+  );
+  return { ...document, files, actions, dossier: dossier ?? null };
 }
 // Permanent deletion of a document and its files, including abandoned
 // captures: no orphan rows or encrypted objects may survive (RGPD erasure).

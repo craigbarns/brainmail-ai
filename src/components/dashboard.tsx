@@ -46,16 +46,19 @@ export function Dashboard() {
     [selected, setSelected] = useState<Data | null>(null),
     [busy, setBusy] = useState(false),
     [create, setCreate] = useState(false),
-    [name, setName] = useState('');
+    [name, setName] = useState(''),
+    [dossiers, setDossiers] = useState<Data[]>([]);
   const refresh = useCallback(async () => {
-    const [m, d, a] = await Promise.all([
+    const [m, d, a, ds] = await Promise.all([
       api('me'),
       api(`documents?archived=${view === 'archive'}&q=${encodeURIComponent(search)}`),
       api('actions'),
+      view === 'dossiers' ? api('dossiers') : Promise.resolve(null),
     ]);
     setMe(m);
     setDocs(d);
     setActions(a);
+    if (ds) setDossiers(ds);
   }, [view, search]);
   // While a mail is being analysed, poll quickly so its result shows up at once.
   const waiting = docs.some((d) => ['queued', 'processing'].includes(d.status));
@@ -191,6 +194,7 @@ export function Dashboard() {
           {[
             ['inbox', LayoutDashboard, 'Vue d’ensemble'],
             ['calendar', CalendarDays, 'Calendrier & actions'],
+            ['dossiers', FolderOpen, 'Dossiers suivis'],
             ['archive', Archive, 'Archives'],
             ['settings', Settings, 'Préférences'],
           ].map(([key, Icon, label]) => {
@@ -313,6 +317,8 @@ export function Dashboard() {
             <Preferences key={me.workspace.id} me={me} task={task} setNotice={setNotice} />
           ) : view === 'calendar' ? (
             <Calendar actions={actions} task={task} onOpen={open} />
+          ) : view === 'dossiers' ? (
+            <Dossiers dossiers={dossiers} task={task} />
           ) : (
             <>
               <section className="stats">
@@ -575,6 +581,97 @@ function ScanCode({ scan }: { scan: Data }) {
         · Un seul téléphone
       </p>
     </>
+  );
+}
+const DOSSIER_STATUS: Record<string, string> = {
+  ouvert: 'Ouvert',
+  en_cours: 'En cours',
+  resolu: 'Résolu',
+  cloture: 'Clôturé',
+};
+function Dossiers({
+  dossiers,
+  task,
+}: {
+  dossiers: Data[];
+  task: (fn: () => Promise<void>) => Promise<void>;
+}) {
+  const [label, setLabel] = useState('');
+  return (
+    <section className="panel">
+      <h2>Dossiers suivis</h2>
+      <p className="muted">
+        Regroupez les courriers d’un même sujet — un dossier URSSAF, une SCI, un
+        sinistre — et suivez-le jusqu’à clôture. Chaque échéance confirmée du
+        dossier reste visible dans le calendrier.
+      </p>
+      <form
+        className="dossier-create"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void task(async () => {
+            await post('dossiers', { label });
+            setLabel('');
+          });
+        }}
+      >
+        <input
+          aria-label="Nom du nouveau dossier"
+          value={label}
+          minLength={1}
+          maxLength={120}
+          required
+          onChange={(e) => setLabel(e.target.value)}
+          placeholder="Nom du dossier (ex : URSSAF 2027)"
+        />
+        <button className="button small">Créer</button>
+      </form>
+      {!dossiers.length && <p className="muted">Aucun dossier pour l’instant.</p>}
+      {dossiers.map((d) => (
+        <article className="dossier-card" key={d.id}>
+          <div className="dossier-head">
+            <strong>{d.label}</strong>
+            <span className="dchip">{DOSSIER_STATUS[d.status]}</span>
+          </div>
+          <p className="muted">
+            {d.docs} courrier{d.docs > 1 ? 's' : ''}
+            {d.pending
+              ? ` · ${d.pending} action${d.pending > 1 ? 's' : ''} en attente`
+              : ' · aucune action en attente'}
+            {d.next_due ? ` · prochaine échéance : ${formatDate(d.next_due)}` : ''}
+          </p>
+          <div className="dossier-actions">
+            {Object.entries(DOSSIER_STATUS)
+              .filter(([k]) => k !== d.status)
+              .map(([k, lbl]) => (
+                <button
+                  key={k}
+                  className="text-button"
+                  onClick={() =>
+                    void task(async () => {
+                      await patch(`dossiers/${d.id}`, { status: k });
+                    })
+                  }
+                >
+                  → {lbl}
+                </button>
+              ))}
+            <button
+              className="text-button"
+              onClick={() => {
+                if (!confirm(`Supprimer le dossier « ${d.label} » ? Les courriers restent, sans dossier.`))
+                  return;
+                void task(async () => {
+                  await api(`dossiers/${d.id}`, { method: 'DELETE' });
+                });
+              }}
+            >
+              Supprimer
+            </button>
+          </div>
+        </article>
+      ))}
+    </section>
   );
 }
 function Preferences({
@@ -871,7 +968,13 @@ function DocumentPanel({
     [folder, setFolder] = useState(d.folder),
     [draft, setDraft] = useState(d.draft),
     [approved, setApproved] = useState(Boolean(d.draft_approved_at)),
-    [copied, setCopied] = useState(false);
+    [copied, setCopied] = useState(false),
+    [dossiers, setDossiers] = useState<Data[]>([]);
+  useEffect(() => {
+    api('dossiers')
+      .then(setDossiers)
+      .catch(() => {});
+  }, []);
   const reload = async () => update(await api(`documents/${d.id}`));
   // Follow a capture or an analysis in progress without asking for a click.
   const pending = ['capturing', 'queued', 'processing'].includes(d.status);
@@ -915,6 +1018,30 @@ function DocumentPanel({
         <p className="muted">
           {d.sender || 'Expéditeur à identifier'} · {formatDate(d.created_at)}
         </p>
+        <div className="dossier-line">
+          <span className="muted">Dossier :</span>{' '}
+          {d.dossier ? <strong>{d.dossier.label}</strong> : <span className="muted">aucun</span>}
+          <select
+            aria-label="Rattacher ce courrier à un dossier"
+            value={d.dossier?.id || ''}
+            onChange={(e) =>
+              void task(async () => {
+                const updated = await api(`documents/${d.id}/dossier`, {
+                  method: 'PUT',
+                  body: JSON.stringify({ dossierId: e.target.value || null }),
+                });
+                update(updated);
+              })
+            }
+          >
+            <option value="">— aucun —</option>
+            {dossiers.map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.label}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="file-links">
           {d.files.map((f: Data) => (
             <a className="button secondary small" key={f.id} href={`/api/files/${f.id}`}>

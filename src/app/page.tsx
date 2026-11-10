@@ -48,13 +48,14 @@ export default async function Home() {
             <span className="dot" /> VOTRE NOUVEL ASSISTANT COURRIER
           </p>
           <h1>
-            Moins de papiers.
+            Aucun courrier oublié.
             <br />
-            <span>Plus d’esprit libre.</span>
+            <span>Aucune échéance perdue.</span>
           </h1>
           <p className="hero-copy">
-            Un courrier arrive. Vous le scannez. BRAINMAIL lit, classe, extrait
-            les échéances et prépare vos réponses — vous gardez la main sur tout.
+            BRAINMAIL centralise vos courriers et emails, repère ce qui doit être
+            fait et prépare vos réponses — pour toutes vos sociétés, au même
+            endroit.
           </p>
           <Link href={`${app}/login?register=1`} className="button">
             Créer mon espace <ArrowRight size={18} />

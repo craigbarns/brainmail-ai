@@ -331,6 +331,26 @@ async function route(request: Request): Promise<Response> {
       await finalizeDocument(ws, id);
       return json({ ok: true });
     }
+    if (parts[2] === 'dossier' && method === 'PUT') {
+      const b = z.object({ dossierId: uuid.nullable() }).parse(await body(request));
+      await transaction(async (db) => {
+        if (b.dossierId) {
+          const {
+            rows: [ds],
+          } = await db.query('SELECT id FROM dossiers WHERE id=$1 AND workspace_id=$2', [
+            b.dossierId,
+            ws,
+          ]);
+          if (!ds) throw new HttpError(404, 'Dossier introuvable.');
+        }
+        await db.query('UPDATE documents SET dossier_id=$1 WHERE id=$2 AND workspace_id=$3', [
+          b.dossierId,
+          id,
+          ws,
+        ]);
+      });
+      return json(await documentDetail(ws, id));
+    }
     if (!parts[2] && method === 'DELETE') {
       // Permanent deletion of the document and its files (RGPD erasure).
       await rateLimit(`delete:${user.userId}`, 60, 3600);
@@ -389,6 +409,62 @@ async function route(request: Request): Promise<Response> {
         'X-Content-Type-Options': 'nosniff',
       },
     });
+  }
+  if (parts[0] === 'dossiers') {
+    if (!parts[1] && method === 'GET') {
+      return json(
+        await query(
+          `SELECT d.id,d.label,d.status,d.created_at,d.updated_at,
+            (SELECT count(*)::int FROM documents doc WHERE doc.dossier_id=d.id) AS docs,
+            (SELECT count(*)::int FROM actions a JOIN documents doc ON doc.id=a.document_id WHERE doc.dossier_id=d.id AND a.confirmed AND NOT a.done) AS pending,
+            (SELECT to_char(min(a.due_date),'YYYY-MM-DD') FROM actions a JOIN documents doc ON doc.id=a.document_id WHERE doc.dossier_id=d.id AND a.confirmed AND NOT a.done) AS next_due
+           FROM dossiers d WHERE d.workspace_id=$1 ORDER BY d.created_at DESC LIMIT 100`,
+          [ws],
+        ),
+      );
+    }
+    if (!parts[1] && method === 'POST') {
+      const b = z
+        .object({ label: z.string().min(1).max(120), documentId: uuid.optional() })
+        .parse(await body(request));
+      await rateLimit(`dossiers:${user.userId}`, 60, 3600);
+      const id = randomUUID();
+      await transaction(async (db) => {
+        await db.query('INSERT INTO dossiers(id,workspace_id,label) VALUES($1,$2,$3)', [
+          id,
+          ws,
+          b.label,
+        ]);
+        if (b.documentId)
+          await db.query('UPDATE documents SET dossier_id=$1 WHERE id=$2 AND workspace_id=$3', [
+            id,
+            b.documentId,
+            ws,
+          ]);
+      });
+      return json({ id }, 201);
+    }
+    const id = uuid.parse(parts[1]);
+    if (method === 'PATCH') {
+      const b = z
+        .object({
+          label: z.string().min(1).max(120).optional(),
+          status: z.enum(['ouvert', 'en_cours', 'resolu', 'cloture']).optional(),
+        })
+        .refine((v) => v.label !== undefined || v.status !== undefined)
+        .parse(await body(request));
+      const rows = await query(
+        `UPDATE dossiers SET label=coalesce($1,label),status=coalesce($2,status),updated_at=now() WHERE id=$3 AND workspace_id=$4 RETURNING id`,
+        [b.label ?? null, b.status ?? null, id, ws],
+      );
+      if (!rows.length) throw new HttpError(404, 'Dossier introuvable.');
+      return json({ ok: true });
+    }
+    if (method === 'DELETE') {
+      await query('DELETE FROM dossiers WHERE id=$1 AND workspace_id=$2', [id, ws]);
+      return json({ ok: true });
+    }
+    throw new HttpError(405, 'Méthode non autorisée.');
   }
   if (parts[0] === 'actions') {
     if (method === 'GET')
