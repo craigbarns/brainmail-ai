@@ -121,6 +121,16 @@ export function dateSupported(dueDate: string | null, evidence: string): boolean
     `\\b(?:${day}|${dayPadded})\\s*[/\\-.]\\s*(?:${month}|${monthPadded})\\s*[/\\-.]\\s*(\\d{2})\\b`,
   ).exec(quoted);
   if (shortYear && shortYear[1] !== year.slice(2)) return false;
+  // A quote containing complete dates (jj/mm/aaaa) is judged on them: a day and
+  // month matching a different year must not validate the deadline.
+  const fullDates = quoted.match(/\b\d{1,2}[/.-]\d{1,2}[/.-](?:\d{2}|\d{4})\b/g) || [];
+  if (fullDates.length) {
+    const asISO = (s: string) => {
+      const [d, m, y] = s.split(/[/.-]/);
+      return `${y.length === 2 ? `20${y}` : y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    };
+    return fullDates.map(asISO).includes(dueDate);
+  }
   if (quoted.includes(dueDate)) return true;
   return [
     new RegExp(`\\b(?:${day}|${dayPadded})\\s*[/\\-.]\\s*(?:${month}|${monthPadded})\\b`),
@@ -146,7 +156,9 @@ export async function analyze(text: string, preferences: string): Promise<Analys
     body: JSON.stringify({
       model: process.env.OPENROUTER_MODEL,
       temperature: 0,
-      provider: { require_parameters: true, data_collection: 'deny' },
+      // Pinned to Mistral's own endpoint: the only provider serving this model,
+      // a European company, so mail text never reaches a non-EU provider.
+      provider: { require_parameters: true, data_collection: 'deny', order: ['Mistral'] },
       messages: [
         {
           role: 'system',

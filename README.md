@@ -6,7 +6,8 @@ SaaS de gestion du courrier, indépendant de PropertyOS. Next.js + TypeScript, P
 
 ## Démarrage en cinq minutes
 
-Prérequis : Node.js 22 LTS et npm. Le dépôt est privé.
+Prérequis : Node.js 22 LTS et npm. Le dépôt est public : n'y placez jamais de
+clé ni de donnée réelle.
 
 ```sh
 npm ci

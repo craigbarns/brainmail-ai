@@ -46,7 +46,22 @@ export async function acceptWebhook(request: Request) {
       "SELECT count(*)::int AS n FROM jobs WHERE workspace_id=$1 AND kind='inbound' AND created_at>now()-interval '24 hours'",
       [ws.id],
     );
-    if (quota.n >= 50) continue;
+    if (quota.n >= 50) {
+      // Not a silent drop: the workspace sees this row in its integrations
+      // panel (state=failed, no content stored, not retried).
+      await transaction((db) =>
+        db.query(
+          "INSERT INTO jobs(id,workspace_id,kind,payload,dedup_key,state,last_error) VALUES($1,$2,'inbound',$3,$4,'failed','Quota journalier de réception atteint (50/j) — message ignoré sans analyse.') ON CONFLICT(dedup_key) DO NOTHING",
+          [
+            randomUUID(),
+            ws.id,
+            JSON.stringify({ type: event.type, email_id: event.data.email_id }),
+            `dropped:${ws.id}:${event.data.email_id}`,
+          ],
+        ),
+      );
+      continue;
+    }
     await transaction((db) =>
       enqueue(db, ws.id, 'inbound', event, `inbound:${ws.id}:${event.data.email_id}`),
     );

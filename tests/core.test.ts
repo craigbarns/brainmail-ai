@@ -677,6 +677,11 @@ test('échéance : année et délais relatifs vérifiés dans la citation', () =
     true,
   );
   assert.equal(dateSupported('2026-02-10', 'sous 30 jours à compter du 10 février'), false);
+  // Jour/mois corrects mais année contredite par une date complète de la citation
+  assert.equal(
+    dateSupported('2027-02-10', 'Émis le 01/01/2027. Paiement avant le 10/02/2026'),
+    false,
+  );
   assert.equal(
     dateSupported('2026-12-15', 'Vous disposez d’un délai jusqu’au 15 décembre 2026'),
     true,

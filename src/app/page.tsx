@@ -62,7 +62,7 @@ export default async function Home() {
           </Link>
           <ul className="hero-badges">
             <li>Sans carte bancaire</li>
-            <li>Données chiffrées, IA en France</li>
+            <li>Données chiffrées, IA européenne</li>
             <li>Vous validez tout</li>
           </ul>
         </div>
@@ -227,8 +227,8 @@ export default async function Home() {
             ],
             [
               BrainCircuit,
-              'OCR et analyse en France',
-              'Lecture par Mistral OCR, analyse par un modèle hébergé en Europe. Vos textes restent là.',
+              'OCR et analyse européens',
+              'Lecture par Mistral OCR, analyse épinglée sur l’API de Mistral (Europe). Vos textes ne transitent par aucun autre fournisseur.',
             ],
             [
               Clock3,
@@ -284,7 +284,7 @@ export default async function Home() {
               [
                 MapPin,
                 'En Europe',
-                'Hébergement en Europe, OCR et analyse Mistral en France. Vos courriers ne partent pas à l’étranger.',
+                'Hébergement européen, OCR et analyse par Mistral (Europe), épinglé sur son API. Vos courriers ne passent par aucun autre fournisseur.',
               ],
               [
                 UserCheck,

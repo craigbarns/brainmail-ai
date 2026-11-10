@@ -179,6 +179,9 @@ export async function documentDetail(
 }
 // Permanent deletion of a document and its files, including abandoned
 // captures: no orphan rows or encrypted objects may survive (RGPD erasure).
+// The storage objects are removed BEFORE the rows: a failed removal aborts the
+// transaction, so a reference never outlives its encrypted object (S3 deletes
+// are idempotent, so a retry cannot fail on an already-removed key).
 export async function deleteDocument(
   workspaceId: string,
   documentId: string,
@@ -200,9 +203,19 @@ export async function deleteDocument(
         'Ce courrier a déjà été envoyé pour analyse. Supprimez-le depuis sa fiche si besoin.',
       );
     const { rows: files } = await db.query(
-      'DELETE FROM document_files WHERE document_id=$1 AND workspace_id=$2 RETURNING storage_key',
+      'SELECT storage_key FROM document_files WHERE document_id=$1 AND workspace_id=$2',
       [documentId, workspaceId],
     );
+    return files.map((f) => f.storage_key as string);
+  });
+  const removed = await Promise.allSettled(keys.map((key) => deleteFile(key)));
+  if (removed.some((r) => r.status === 'rejected'))
+    throw new HttpError(503, 'Suppression du stockage momentanément indisponible. Réessayez.');
+  await transaction(async (db) => {
+    await db.query('DELETE FROM document_files WHERE document_id=$1 AND workspace_id=$2', [
+      documentId,
+      workspaceId,
+    ]);
     await db.query('DELETE FROM documents WHERE id=$1 AND workspace_id=$2', [
       documentId,
       workspaceId,
@@ -212,7 +225,5 @@ export async function deleteDocument(
       "UPDATE jobs SET state='failed',last_error='Courrier supprimé.',lease_until=NULL,lease_token=NULL WHERE workspace_id=$1 AND dedup_key=$2 AND state IN ('queued','running')",
       [workspaceId, `analyze:${documentId}`],
     );
-    return files.map((f) => f.storage_key as string);
   });
-  await Promise.allSettled(keys.map((key) => deleteFile(key)));
 }

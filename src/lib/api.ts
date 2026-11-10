@@ -64,7 +64,11 @@ async function route(request: Request): Promise<Response> {
     method = request.method;
   if (parts.join('/') === 'health' && method === 'GET') {
     await query('SELECT 1');
-    return json({ status: 'ok', service: 'brainmail' });
+    // A queue age a monitor can alert on: the web health alone only proves PostgreSQL.
+    const [q] = await query(
+      "SELECT floor(extract(epoch FROM now()-min(run_at))/60)::int AS age FROM jobs WHERE state IN ('queued','running')",
+    );
+    return json({ status: 'ok', service: 'brainmail', queue_age_minutes: q?.age ?? 0 });
   }
   if (parts.join('/') === 'webhooks/resend' && method === 'POST') {
     await acceptWebhook(request);
