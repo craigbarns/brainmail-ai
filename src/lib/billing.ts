@@ -116,6 +116,12 @@ export async function createCheckout(userId: string, email: string, plan: PlanNa
     customer,
     'line_items[0][price]': price,
     'line_items[0][quantity]': '1',
+    // WeMade is VAT-registered: Stripe Tax adds 20 % for FR customers and
+    // reverses it for EU businesses with a valid VAT number, collected here.
+    'automatic_tax[enabled]': 'true',
+    'tax_id_collection[enabled]': 'true',
+    'customer_update[address]': 'auto',
+    'customer_update[name]': 'auto',
     success_url: `${appUrl}/app/abonnement?checkout=merci`,
     cancel_url: `${appUrl}/app/abonnement`,
     'subscription_data[metadata][user_id]': userId,

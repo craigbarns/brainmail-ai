@@ -378,8 +378,9 @@ export default async function Home() {
           ))}
         </div>
         <p className="pricing-note">
-          Annuel : 2 mois offerts. Pilote fondateur : 3 mois offerts contre votre retour
-          d’expérience — parlez-en à votre contact BRAINMAIL.
+          Prix HT ; TVA française 20 % ajoutée au paiement, autoliquidée pour les entreprises de
+          l&apos;UE avec un numéro de TVA valide. Annuel : 2 mois offerts. Pilote fondateur : 3
+          mois offerts contre votre retour d’expérience — parlez-en à votre contact BRAINMAIL.
         </p>
       </section>
 
@@ -407,9 +408,15 @@ export default async function Home() {
           <a href="#fonctions">Fonctionnalités</a>
           <a href="#confiance">Confiance</a>
           <a href="#tarifs">Tarifs</a>
+          <Link href="/legal/mentions-legales">Mentions légales</Link>
+          <Link href="/legal/cgv">CGV</Link>
+          <Link href="/legal/confidentialite">Confidentialité</Link>
           <Link href={`${app}/login`}>Connexion</Link>
         </nav>
-        <p className="lp-legal">© {new Date().getFullYear()} WeMade SASU — Marseille, France.</p>
+        <p className="lp-legal">
+          © {new Date().getFullYear()} WeMade SASU — Marseille, France. SIREN 832 419 428. Prix
+          HT ; TVA française 20 % ajoutée au paiement.
+        </p>
       </footer>
     </main>
   );

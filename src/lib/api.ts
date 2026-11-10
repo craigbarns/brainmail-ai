@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import QRCode from 'qrcode';
 import { z } from 'zod';
 import { Resend } from 'resend';
-import { authenticate, register, login, sendVerification } from './auth';
+import { authenticate, register, login, sendVerification, requestPasswordReset, resetPassword } from './auth';
 import {
   billingOf,
   createCheckout,
@@ -96,6 +96,32 @@ async function route(request: Request): Promise<Response> {
   if (parts[0] === 'auth') {
     if (method !== 'POST') throw new HttpError(405, 'Méthode non autorisée.');
     const b = await body(request);
+    if (parts[1] === 'forgot') {
+      const email = z
+        .email()
+        .max(254)
+        .transform((s) => s.toLowerCase().trim())
+        .parse(b.email);
+      const ip = clientIp(request);
+      await rateLimit(`forgot-ip:${ip}`, 10);
+      await rateLimit(`forgot:${email}`, 3);
+      const sent = await requestPasswordReset(email);
+      return json({
+        ok: true,
+        sent,
+        message: sent
+          ? 'Consultez votre boîte email : un lien de réinitialisation vient de partir.'
+          : 'Si un compte existe pour cette adresse, un lien de réinitialisation a été envoyé.',
+      });
+    }
+    if (parts[1] === 'reset') {
+      const token = z.string().min(32).max(128).parse(b.token);
+      const password = z.string().min(12).max(128).parse(b.password);
+      const ip = clientIp(request);
+      await rateLimit(`reset-ip:${ip}`, 10);
+      await resetPassword(token, password);
+      return json({ ok: true });
+    }
     if (parts[1] === 'logout') {
       const t = cookiesOf(request).brainmail;
       if (t) await query('DELETE FROM sessions WHERE token_hash=$1', [hash(t)]);

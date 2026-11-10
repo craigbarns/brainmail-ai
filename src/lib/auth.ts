@@ -76,6 +76,47 @@ export async function sendVerification(email: string, token: string) {
     );
   return true;
 }
+export async function requestPasswordReset(email: string) {
+  const [user] = await query<{ id: string }>('SELECT id FROM users WHERE email=$1', [email]);
+  if (!user) return false; // No account enumeration: the caller always answers the same.
+  const token = secret();
+  await transaction(async (db) => {
+    // One live link at a time: a fresh request invalidates the previous one.
+    await db.query('UPDATE password_resets SET used=true WHERE user_id=$1 AND used=false', [
+      user.id,
+    ]);
+    await db.query(
+      "INSERT INTO password_resets(user_id,token_hash,expires_at) VALUES($1,$2,now()+interval '2 hours')",
+      [hash(token), user.id],
+    );
+  });
+  return sendResetEmail(email, token);
+}
+export async function sendResetEmail(email: string, token: string) {
+  if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM) return false;
+  const { error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
+    from: process.env.RESEND_FROM,
+    to: email,
+    subject: 'Nouveau mot de passe BRAINMAIL',
+    text: `Réinitialisez votre mot de passe (lien valable 2 heures) :\n${process.env.APP_URL}/login?reset=${token}\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre mot de passe reste inchangé.`,
+  });
+  if (error) throw new HttpError(503, 'Service email indisponible. Réessayez plus tard.');
+  return true;
+}
+export async function resetPassword(token: string, password: string) {
+  const [row] = await query<{ user_id: string }>(
+    'SELECT user_id FROM password_resets WHERE token_hash=$1 AND used=false AND expires_at>now()',
+    [hash(token)],
+  );
+  if (!row) throw new HttpError(410, 'Lien expiré ou déjà utilisé. Demandez un nouveau lien.');
+  const encoded = await passwordHash(password);
+  await transaction(async (db) => {
+    await db.query('UPDATE users SET password_hash=$1 WHERE id=$2', [encoded, row.user_id]);
+    await db.query('UPDATE password_resets SET used=true WHERE token_hash=$1', [hash(token)]);
+    // Every session dies with the password: a stolen session cannot survive a reset.
+    await db.query('DELETE FROM sessions WHERE user_id=$1', [row.user_id]);
+  });
+}
 export async function login(email: string, password: string) {
   const [user] = await query('SELECT * FROM users WHERE email=$1', [email]);
   // Execute a password derivation even for unknown accounts.
