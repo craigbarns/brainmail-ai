@@ -64,7 +64,7 @@ Toutes les variables sont décrites dans `.env.example`. Aucune clé secrète ne
 | `APP_URL`                                          | Origine exacte de l’application, QR et liens email ; HTTPS en production                        |
 | `EXTRA_ORIGINS`                                    | Origines supplémentaires acceptées pour les requêtes navigateur, ex. `https://www.brainmail.ai` |
 | `DATABASE_URL`                                     | Connexion PostgreSQL privée Railway                                                             |
-| `SIGNUP_EMAIL_ALLOWLIST`                           | Liste d’emails autorisés à créer un compte pendant le pilote                                    |
+| `SIGNUP_EMAIL_ALLOWLIST`                           | Liste d’emails autorisés à s’inscrire ; **vide** = inscription publique                        |
 | `STORAGE_ENCRYPTION_KEY`                           | 32 octets en base64, identiques pour web et worker                                              |
 | `S3_ENDPOINT`, `S3_BUCKET`, `S3_REGION`            | Paramètres du bucket privé Railway                                                              |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`         | Identifiants du bucket, uniquement côté serveur                                                 |

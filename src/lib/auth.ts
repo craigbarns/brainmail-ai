@@ -26,9 +26,10 @@ export async function authenticate(request: Request): Promise<Identity> {
   };
 }
 export async function register(email: string, password: string, name: string) {
-  // The allowlist applies as soon as it is defined; in production it is mandatory.
+  // The allowlist applies as soon as it is defined and non-empty; an empty
+  // value means public sign-up. Undefined in production stays closed by default.
   const allowSetting = process.env.SIGNUP_EMAIL_ALLOWLIST;
-  if (allowSetting !== undefined && allowSetting !== '') {
+  if (allowSetting) {
     const allow = allowSetting
       .toLowerCase()
       .split(',')
@@ -36,7 +37,7 @@ export async function register(email: string, password: string, name: string) {
       .filter(Boolean);
     if (!allow.includes(email))
       throw new HttpError(403, 'Les inscriptions sont sur invitation pour cette version pilote.');
-  } else if (process.env.NODE_ENV === 'production') {
+  } else if (process.env.NODE_ENV === 'production' && allowSetting === undefined) {
     throw new HttpError(403, 'Les inscriptions sont sur invitation pour cette version pilote.');
   }
   const id = randomUUID(),
