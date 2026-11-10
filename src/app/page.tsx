@@ -136,6 +136,34 @@ const PREVIEW = [
   ],
   ['Relevé de compte courant', 'Banque du Midi', 'Banque', '', '', ''],
 ];
+// FAQ de la landing : visible ET balisée (même contenu, même ordre).
+const LANDING_FAQS = [
+  {
+    q: 'Comment BRAINMAIL traite-t-il mes courriers papier ?',
+    a: 'Vous scannez chaque courrier depuis votre téléphone grâce à un QR code temporaire : les pages arrivent dans votre espace, l’IA les lit, les classe et en extrait les échéances. Aucune application à installer.',
+  },
+  {
+    q: 'D’où viennent les échéances affichées ? Sont-elles fiables ?',
+    a: 'Chaque échéance est sourcée : l’IA doit citer la phrase exacte du document qui contient la date, et la citation est vérifiée automatiquement. Une date ambiguë ou non justifiée n’est pas proposée — vous confirmez toujours avant l’action.',
+  },
+  {
+    q: 'L’IA peut-elle répondre ou payer à ma place ?',
+    a: 'Non. BRAINMAIL prépare des brouillons de réponse et des actions, mais rien ne part et rien n’est payé sans votre validation explicite. Le service est conçu pour ne jamais effectuer d’action irréversible seul.',
+  },
+  {
+    q: 'Où sont stockées mes données, et qui les analyse ?',
+    a: 'Les fichiers sont chiffrés en AES-256-GCM et stockés en Europe. L’analyse est confiée à un seul sous-traitant d’IA : Mistral, une entreprise française, en appel direct à son API européenne — aucun intermédiaire.',
+  },
+  {
+    q: 'Je reçois aussi des courriers par email. Ça marche ?',
+    a: 'Oui : chaque espace dispose d’une adresse email dédiée pour vos expéditeurs numériques. Les pièces jointes sont traitées comme des documents, et l’adresse peut être tournée en un clic si elle fuit.',
+  },
+  {
+    q: 'Combien ça coûte, et puis-je arrêter quand je veux ?',
+    a: 'Solo 29 € HT/mois (1 société), Pro 59 € HT/mois (3 sociétés), Cabinet 149 € HT/mois (10 sociétés). Sans engagement : vous résiliez en un clic depuis le portail client, et le service reste actif jusqu’à la fin du mois payé.',
+  },
+];
+
 export default async function Home() {
   // APP_URL exists only at runtime on Railway, not during the Docker build:
   // render per request so the links target the application domain.
@@ -392,6 +420,71 @@ export default async function Home() {
           Créer mon espace <ArrowRight size={18} />
         </Link>
       </section>
+
+      <section className="land-section" aria-label="Questions fréquentes">
+        <p className="eyebrow">QUESTIONS FRÉQUENTES</p>
+        <h2>
+          Les questions que <span>tout le monde pose.</span>
+        </h2>
+        <div className="faq-list">
+          {LANDING_FAQS.map((f) => (
+            <div key={f.q} className="faq-item">
+              <h3>{f.q}</h3>
+              <p>{f.a}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'Organization',
+                name: 'WeMade SASU',
+                url: 'https://www.brainmail.ai',
+                email: 'gregory@brainmail.ai',
+                address: {
+                  '@type': 'PostalAddress',
+                  addressLocality: 'Marseille',
+                  addressCountry: 'FR',
+                },
+              },
+              {
+                '@type': 'WebSite',
+                name: 'BRAINMAIL.ai',
+                url: 'https://www.brainmail.ai',
+                inLanguage: 'fr-FR',
+              },
+              {
+                '@type': 'SoftwareApplication',
+                name: 'BRAINMAIL.ai',
+                applicationCategory: 'BusinessApplication',
+                operatingSystem: 'Web',
+                url: 'https://www.brainmail.ai',
+                description:
+                  'BRAINMAIL centralise le courrier papier et les emails de vos sociétés, extrait les échéances avec leur citation dans le document, et prépare les réponses à valider.',
+                offers: [
+                  { '@type': 'Offer', name: 'Solo', price: '29', priceCurrency: 'EUR', description: '1 société, 50 courriers par mois' },
+                  { '@type': 'Offer', name: 'Pro', price: '59', priceCurrency: 'EUR', description: '3 sociétés, 200 courriers par mois' },
+                  { '@type': 'Offer', name: 'Cabinet', price: '149', priceCurrency: 'EUR', description: '10 sociétés, 1 000 courriers par mois' },
+                ],
+              },
+              {
+                '@type': 'FAQPage',
+                mainEntity: LANDING_FAQS.map((f) => ({
+                  '@type': 'Question',
+                  name: f.q,
+                  acceptedAnswer: { '@type': 'Answer', text: f.a },
+                })),
+              },
+            ],
+          }),
+        }}
+      />
 
       <footer className="lp-footer">
         <div>

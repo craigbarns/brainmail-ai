@@ -2788,3 +2788,30 @@ p.error {
 .legal-nav a:hover {
   text-decoration: underline;
 }
+
+/* FAQ landing + pages solutions */
+.faq-list {
+  display: grid;
+  gap: 14px;
+  max-width: 780px;
+}
+.faq-item {
+  background: var(--sheet);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+.faq-item h3 {
+  font-size: 15px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.faq-item p {
+  font-size: 14px;
+  color: var(--text);
+  margin: 0;
+}
+.legal-page .lead {
+  font-size: 16px;
+  color: var(--text);
+}
