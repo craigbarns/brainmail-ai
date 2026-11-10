@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, BadgeCheck, CreditCard } from 'lucide-react';
@@ -41,6 +41,15 @@ const OFFERS = [
 ];
 
 export default function AbonnementPage() {
+  // useSearchParams must run inside a Suspense boundary during prerender.
+  return (
+    <Suspense fallback={<div className="app-shell" />}>
+      <Abonnement />
+    </Suspense>
+  );
+}
+
+function Abonnement() {
   const params = useSearchParams();
   const [status, setStatus] = useState<Status | null>(null);
   const [busy, setBusy] = useState('');

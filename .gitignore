@@ -10,5 +10,4 @@ test-results/
 .DS_Store
 
 .next-e2e/
-prospection/*.csv
-prospection/*.json
+prospection/
