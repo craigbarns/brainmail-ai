@@ -63,7 +63,11 @@ export async function handle(request: Request): Promise<Response> {
     if (error instanceof z.ZodError)
       return json({ error: 'Données invalides. Vérifiez les champs et les dates.' }, 400);
     if (error instanceof HttpError) return json({ error: error.message }, error.status);
-    console.error('request_failed', error instanceof Error ? error.name : 'unknown');
+    console.error(
+      'request_failed',
+      error instanceof Error ? error.message : 'unknown',
+      error instanceof Error ? error.stack?.split('\n').slice(1, 3).join(' | ') : '',
+    );
     return json({ error: 'Opération indisponible. Vérifiez la configuration du service.' }, 500);
   }
 }
