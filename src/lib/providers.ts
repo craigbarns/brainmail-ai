@@ -141,24 +141,21 @@ export function dateSupported(dueDate: string | null, evidence: string): boolean
   );
 }
 export async function analyze(text: string, preferences: string): Promise<Analysis> {
-  if (!process.env.OPENROUTER_API_KEY || !process.env.OPENROUTER_MODEL)
-    throw new HttpError(503, 'OpenRouter non configuré.');
+  if (!process.env.MISTRAL_API_KEY)
+    throw new HttpError(503, 'Analyse non configurée (Mistral).');
   const schema = z.toJSONSchema(analysisSchema, { unrepresentable: 'any' });
   delete schema.$schema;
-  const result = await providerJSON('https://openrouter.ai/api/v1/chat/completions', {
+  const result = await providerJSON('https://api.mistral.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      Authorization: `Bearer ${process.env.MISTRAL_API_KEY}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
-      'X-Title': 'BRAINMAIL.ai',
     },
     body: JSON.stringify({
-      model: process.env.OPENROUTER_MODEL,
+      // Direct call to Mistral's own API: no intermediary, European processing,
+      // same processor as the OCR. OpenRouter is no longer used.
+      model: process.env.MISTRAL_ANALYSIS_MODEL || 'mistral-small-latest',
       temperature: 0,
-      // Pinned to Mistral's own endpoint: the only provider serving this model,
-      // a European company, so mail text never reaches a non-EU provider.
-      provider: { require_parameters: true, data_collection: 'deny', order: ['Mistral'] },
       messages: [
         {
           role: 'system',
@@ -220,7 +217,7 @@ export async function syncMemory(workspaceId: string, preferences: string) {
 export function integrations() {
   return {
     ocr: Boolean(process.env.MISTRAL_API_KEY),
-    llm: Boolean(process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_MODEL),
+    llm: Boolean(process.env.MISTRAL_API_KEY),
     email: Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM),
     memory: Boolean(process.env.MEM0_API_KEY),
     inbox: process.env.RESEND_INBOUND_ENABLED === 'true',

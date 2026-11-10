@@ -2,7 +2,7 @@
 
 SaaS de gestion du courrier, indépendant de PropertyOS. Next.js + TypeScript, PostgreSQL, stockage privé S3, hébergement prévu sur Railway. Aucun service Supabase ni Vercel.
 
-**Parcours prioritaire :** QR temporaire → photos multipages → synchronisation ordinateur → Mistral OCR → analyse OpenRouter → classement → échéance à confirmer → réponse à relire.
+**Parcours prioritaire :** QR temporaire → photos multipages → synchronisation ordinateur → Mistral OCR → analyse Mistral (appel direct) → classement → échéance à confirmer → réponse à relire.
 
 ## Démarrage en cinq minutes
 
@@ -47,7 +47,7 @@ Définir `DATABASE_URL=postgresql://brainmail:local-development-only@localhost:5
 - Photos JPEG/PNG/WebP, décodées et réencodées sans métadonnées GPS ; PDF lisibles de 20 pages maximum. 15 Mo par fichier, 20 fichiers et 50 Mo par courrier. Les originaux photo sont normalisés en JPEG ; ce produit n’est pas un système d’archivage probant.
 - Stockage AES-256-GCM côté application, données authentifiées liées à l’espace/document/fichier, bucket privé. Aucun lien public aux originaux. Téléchargement par une route authentifiée.
 - Dashboard, recherche sur titre/expéditeur/résumé/dossier, classement éditable, dossiers, archive et désarchivage. **Suppression définitive** d’un courrier et de ses fichiers (droit à l’effacement RGPD) ; la révocation d’un QR supprime aussi la capture abandonnée.
-- OCR Mistral puis JSON structuré OpenRouter validé côté serveur. Le texte documentaire est traité comme donnée non fiable. Pas de navigation vers les liens du courrier, de paiement ni d’envoi autonome.
+- OCR Mistral puis JSON structuré validé côté serveur, analyse en appel direct à l’API Mistral (aucun intermédiaire). Le texte documentaire est traité comme donnée non fiable. Pas de navigation vers les liens du courrier, de paiement ni d’envoi autonome.
 - Calendrier mensuel et actions éditables. Une date sans citation correspondante est retirée ; toutes les actions nécessitent confirmation humaine avant rappels. Dates sans heure, rappel selon Europe/Paris.
 - Réponse éditable, validation explicite et copie. Toute modification dans l’éditeur retire la validation. **Aucun envoi de réponse automatique.**
 - Worker PostgreSQL durable : prise exclusive des tâches, bail renouvelable, protection contre les workers obsolètes, quatre tentatives maximum, délais exponentiels, relance depuis l’interface, conservation du texte OCR entre reprises. Nettoyage horaire des sessions, tokens, compteurs, captures et jobs terminés expirés.
@@ -69,7 +69,7 @@ Toutes les variables sont décrites dans `.env.example`. Aucune clé secrète ne
 | `S3_ENDPOINT`, `S3_BUCKET`, `S3_REGION`            | Paramètres du bucket privé Railway                                                              |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`         | Identifiants du bucket, uniquement côté serveur                                                 |
 | `MISTRAL_API_KEY`, `MISTRAL_OCR_MODEL`             | OCR ; modèle par défaut `mistral-ocr-latest`                                                    |
-| `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`           | Modèle explicitement choisi, compatible `json_schema` et politique `data_collection: deny`      |
+| `MISTRAL_API_KEY`, `MISTRAL_OCR_MODEL`, `MISTRAL_ANALYSIS_MODEL` | OCR **et** analyse : appel direct à l’API Mistral (Europe), aucun intermédiaire. `MISTRAL_ANALYSIS_MODEL` optionnel (défaut `mistral-small-latest`) |
 | `RESEND_API_KEY`, `RESEND_FROM`                    | Vérification email et rappels, expéditeur sur domaine vérifié                                   |
 | `RESEND_INBOUND_API_KEY`                           | Clé du compte Resend dédié à la réception ; à défaut `RESEND_API_KEY` est utilisée              |
 | `RESEND_INBOUND_ENABLED`                           | `false` jusqu’à validation de la réception et des signatures                                    |
@@ -80,7 +80,7 @@ Toutes les variables sont décrites dans `.env.example`. Aucune clé secrète ne
 | `LOCAL_DEV`, `LOCAL_DB_PATH`, `LOCAL_STORAGE_PATH` | Développement uniquement ; stockage local et PGlite refusés en production                       |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`       | Emplacements réservés ; abonnement et facturation hors MVP actuel                               |
 
-Les services externes sont appelés par le worker. Mistral reçoit les fichiers à analyser ; OpenRouter reçoit le texte extrait et le contexte sélectionné. Mem0 ne reçoit pas les courriers. Les restrictions réseau et les choix de modèles devront être validés avec les comptes réellement utilisés.
+Les services externes sont appelés par le worker. Mistral reçoit les fichiers à analyser **et** le texte extrait pour l’analyse (appel direct, aucun intermédiaire). Mem0 ne reçoit pas les courriers. Les restrictions réseau et les choix de modèles devront être validés avec les comptes réellement utilisés.
 
 ## Déploiement Railway
 
@@ -91,7 +91,7 @@ Le dépôt contient un `Dockerfile` et les migrations SQL. La configuration des 
 3. Service `worker` : même dépôt et même branche, même pré-déploiement, démarrage `npm run worker`, sans domaine ni contrôle HTTP. Les deux migrations sont sérialisées par verrou PostgreSQL. Relier **les deux** services à GitHub : un `railway up` manuel ne laisse aucun commit associé et peut faire tourner web et worker sur deux versions différentes.
 4. Renseigner les variables privées des deux services. `DATABASE_URL` référence la base du projet. Les variables S3 reprennent exactement les valeurs du bucket. Railway utilise des URL virtual-hosted, donc `S3_FORCE_PATH_STYLE=false`. Aucun volume partagé entre web et worker n’est nécessaire.
 5. Générer `STORAGE_ENCRYPTION_KEY` (`openssl rand -base64 32`) et conserver sa sauvegarde sécurisée. Renseigner la **même valeur** pour les deux services. Ne pas réutiliser la clé locale avec de nouvelles données réelles par défaut.
-6. Définir `LOCAL_DEV=false`, `STORAGE_DRIVER=s3`, `APP_URL` sur l’URL HTTPS choisie. Renseigner l’email propriétaire dans `SIGNUP_EMAIL_ALLOWLIST` et les clés Mistral/OpenRouter/Resend. Ne pas activer la réception avant sa configuration complète.
+6. Définir `LOCAL_DEV=false`, `STORAGE_DRIVER=s3`, `APP_URL` sur l’URL HTTPS choisie. Renseigner l’email propriétaire dans `SIGNUP_EMAIL_ALLOWLIST` et les clés Mistral/Resend. Ne pas activer la réception avant sa configuration complète.
 7. Service `Postgres` : onglet **Backups**, activer une sauvegarde quotidienne avant toute donnée réelle, puis tester une restauration.
 8. Déployer web et worker. Vérifier les migrations, le statut sain, un HTTP 200 sur `/api/health`, la connexion, un upload réel et son téléchargement, puis le traitement d’un courrier test non confidentiel.
 9. Observer le résultat OCR, le classement, la citation de date, la confirmation d’action, le brouillon et un rappel de test. Une compilation réussie ne valide pas ces services externes.
@@ -153,4 +153,4 @@ Le test avec PostgreSQL Railway, S3 Railway et les APIs réelles est une étape 
 
 ## Références d’intégration
 
-Contrats consultés pendant le développement : [Mistral OCR](https://docs.mistral.ai/api/endpoint/ocr), [sorties structurées OpenRouter](https://openrouter.ai/docs/guides/features/structured-outputs), [Railway Buckets](https://docs.railway.com/storage-buckets), [réception Resend](https://resend.com/docs/dashboard/receiving/get-email-content), [création d’Inbox](https://resend.com/docs/api-reference/inboxes/create-inbox), [mémoire Mem0](https://docs.mem0.ai/api-reference/memory/add-memories), [recherche Mem0](https://docs.mem0.ai/api-reference/memory/search-memories).
+Contrats consultés pendant le développement : [Mistral OCR](https://docs.mistral.ai/api/endpoint/ocr), [sorties structurées Mistral](https://docs.mistral.ai/api), [Railway Buckets](https://docs.railway.com/storage-buckets), [réception Resend](https://resend.com/docs/dashboard/receiving/get-email-content), [création d’Inbox](https://resend.com/docs/api-reference/inboxes/create-inbox), [mémoire Mem0](https://docs.mem0.ai/api-reference/memory/add-memories), [recherche Mem0](https://docs.mem0.ai/api-reference/memory/search-memories).

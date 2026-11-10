@@ -294,20 +294,21 @@ test('absence de clés : échec explicite et relance possible sans résultat inv
   await workOnce(providers);
   assert.equal((await documentDetail(a.ws, s.documentId)).status, 'ready');
 });
-test('contrat OCR et LLM : sorties validées et date sans citation supprimée', async () => {
+test('contrat OCR et analyse Mistral direct : sorties validées et date sans citation supprimée', async () => {
   const old = globalThis.fetch;
   process.env.MISTRAL_API_KEY = 'test-only';
-  process.env.OPENROUTER_API_KEY = 'test-only';
-  process.env.OPENROUTER_MODEL = 'test/model';
   try {
     globalThis.fetch = async (input, init) => {
       const b = JSON.parse(init!.body as string);
-      if (String(input).includes('mistral')) {
+      if (String(input).includes('/ocr')) {
         assert.equal(b.document.type, 'image_url');
         return Response.json({ pages: [{ markdown: 'Texte test' }] });
       }
+      // Analyse : appel direct à l'API Mistral, sans intermédiaire.
+      assert.ok(String(input).includes('api.mistral.ai/v1/chat/completions'));
       assert.equal(b.response_format.type, 'json_schema');
-      assert.equal(b.provider.data_collection, 'deny');
+      assert.equal(b.response_format.json_schema.strict, true);
+      assert.ok(!('provider' in b));
       return Response.json({
         choices: [
           {
@@ -330,8 +331,6 @@ test('contrat OCR et LLM : sorties validées et date sans citation supprimée', 
   } finally {
     globalThis.fetch = old;
     delete process.env.MISTRAL_API_KEY;
-    delete process.env.OPENROUTER_API_KEY;
-    delete process.env.OPENROUTER_MODEL;
   }
 });
 test('webhook signé, routage explicite et déduplication de livraison', async () => {
@@ -527,8 +526,7 @@ test('suppression définitive d’un courrier, fichiers et capture abandonnée',
 });
 test('échéance rejetée si la citation ne contient pas la date annoncée', async () => {
   const old = globalThis.fetch;
-  process.env.OPENROUTER_API_KEY = 'test-only';
-  process.env.OPENROUTER_MODEL = 'test/model';
+  process.env.MISTRAL_API_KEY = 'test-only';
   try {
     globalThis.fetch = async () =>
       Response.json({
@@ -576,8 +574,7 @@ test('échéance rejetée si la citation ne contient pas la date annoncée', asy
     assert.equal(byLabel['Sans citation'], null);
   } finally {
     globalThis.fetch = old;
-    delete process.env.OPENROUTER_API_KEY;
-    delete process.env.OPENROUTER_MODEL;
+    delete process.env.MISTRAL_API_KEY;
   }
 });
 test('nettoyage : sessions, compteurs et captures expirés supprimés', async () => {

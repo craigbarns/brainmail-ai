@@ -227,8 +227,8 @@ export default async function Home() {
             ],
             [
               BrainCircuit,
-              'OCR et analyse européens',
-              'Lecture par Mistral OCR, analyse épinglée sur l’API de Mistral (Europe). Vos textes ne transitent par aucun autre fournisseur.',
+              'OCR et analyse par Mistral',
+              'Lecture et analyse en appel direct à l’API de Mistral (Europe) — aucun intermédiaire, vos textes ne passent que par eux.',
             ],
             [
               Clock3,
@@ -284,7 +284,7 @@ export default async function Home() {
               [
                 MapPin,
                 'En Europe',
-                'Hébergement européen, OCR et analyse par Mistral (Europe), épinglé sur son API. Vos courriers ne passent par aucun autre fournisseur.',
+                'Hébergement européen, OCR et analyse en direct sur l’API de Mistral (Europe). Un seul sous-traitant IA, aucun intermédiaire.',
               ],
               [
                 UserCheck,
