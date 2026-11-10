@@ -1,351 +1,361 @@
 import Link from 'next/link';
 import { connection } from 'next/server';
 import {
-  ArrowUpRight,
-  ScanLine,
-  ShieldCheck,
-  Sparkles,
   ArrowRight,
   Mail,
   Smartphone,
   FileText,
-  BrainCircuit,
-  Clock3,
+  ScanText,
+  CalendarClock,
   Building2,
   Inbox,
   Lock,
   UserCheck,
   MapPin,
   Trash2,
+  PenLine,
+  Check,
 } from 'lucide-react';
+const STEPS = [
+  [
+    'Scannez, en 30 secondes',
+    'Un QR code affiché à l’écran, votre téléphone photographie chaque page — ou glissez un PDF. Multipages, jusqu’à 50 Mo.',
+  ],
+  [
+    'L’IA fait le tri',
+    'Lecture puis analyse : titre, expéditeur, catégorie, résumé — et chaque échéance doit être citée noir sur blanc dans le document.',
+  ],
+  [
+    'Vous décidez',
+    'Confirmez les actions à suivre, relisez et validez le brouillon de réponse. Rien ne part sans vous.',
+  ],
+];
+const FEATURES = [
+  [
+    Smartphone,
+    'Scanner multipage',
+    'Un QR code, votre téléphone, chaque page photographiée dans l’ordre — de n’importe où.',
+  ],
+  [
+    FileText,
+    'Import PDF',
+    'Vos documents déjà numérisés suivent le même chemin : un PDF, un courrier.',
+  ],
+  [
+    ScanText,
+    'Lecture et analyse par Mistral',
+    'Lecture et analyse en appel direct à l’API de Mistral (Europe) — aucun intermédiaire, vos textes ne passent que par eux.',
+  ],
+  [
+    CalendarClock,
+    'Échéances sourcées',
+    'Une date n’est retenue que si elle est citée dans le document. Les rappels email arrivent avant.',
+  ],
+  [
+    PenLine,
+    'Brouillons sous votre plume',
+    'Une réponse est préparée, jamais envoyée. Vous la relisez, l’ajustez, la validez.',
+  ],
+  [
+    Building2,
+    'Chaque société à sa place',
+    'Plusieurs espaces isolés sur un compte : artisan, SCI, cabinet — et bientôt vos clients.',
+  ],
+  [
+    Inbox,
+    'Réception email',
+    'Une adresse dédiée par espace : les emails entrants suivent le même traitement que le papier.',
+  ],
+  [
+    Trash2,
+    'Effacement réel',
+    'Supprimez un courrier : documents et fichiers chiffrés partent. Le droit à l’oubli, tout court.',
+  ],
+] as const;
+const TRUST = [
+  [
+    Lock,
+    'Chiffré au repos',
+    'AES-256-GCM, chaque fichier lié à son espace. Aucun lien public, téléchargement authentifié.',
+  ],
+  [
+    MapPin,
+    'En Europe',
+    'Hébergement européen, lecture et analyse en direct sur l’API de Mistral (Europe). Un seul sous-traitant IA, aucun intermédiaire.',
+  ],
+  [
+    UserCheck,
+    'Humain au centre',
+    'Aucun envoi automatique, aucune action déclenchée par l’IA. Chaque échéance est confirmée par vous.',
+  ],
+  [
+    Trash2,
+    'Effacement RGPD',
+    'Suppression définitive d’un courrier et de ses fichiers chiffrés, à tout moment.',
+  ],
+] as const;
+const PLANS = [
+  {
+    name: 'Solo',
+    price: '29',
+    who: 'Artisans, indépendants, professions libérales.',
+    items: ['1 société', '50 courriers par mois', 'Scan, analyse, échéances', 'Rappels email'],
+    best: false,
+  },
+  {
+    name: 'Pro',
+    price: '59',
+    who: 'TPE avec plusieurs activités ou sociétés.',
+    items: ['3 sociétés', '200 courriers par mois', 'Réception email incluse', 'Rappels email'],
+    best: true,
+  },
+  {
+    name: 'Cabinet',
+    price: '149',
+    who: 'Experts-comptables, gestionnaires, syndics.',
+    items: [
+      '10 sociétés, +15 € chacune',
+      '1 000 courriers par mois',
+      'Support prioritaire',
+      'Onboarding accompagné',
+    ],
+    best: false,
+  },
+];
+// Lignes du registre montrées dans l'aperçu : données d'exemple, fictives.
+const PREVIEW = [
+  ['Avis d’échéance — cotisations T4', 'URSSAF', 'Administratif', '15 déc.', 'soon', 'À vérifier'],
+  ['Facture d’acompte n° 6', 'Menuiserie Carlier', 'Facture', '30 nov.', '', 'Confirmée'],
+  [
+    'Appel de cotisation multirisque',
+    'Mutuelle des Artisans',
+    'Assurance',
+    '5 janv.',
+    '',
+    'Confirmée',
+  ],
+  ['Relevé de compte courant', 'Banque du Midi', 'Banque', '', '', ''],
+];
 export default async function Home() {
   // APP_URL exists only at runtime on Railway, not during the Docker build:
   // render per request so the links target the application domain.
   await connection();
   const app = process.env.APP_URL || '';
+  const signup = `${app}/login?register=1`;
   return (
-    <main className="landing">
-      <header className="landing-nav">
+    <main className="lp">
+      <header className="lp-nav">
         <Link href="/" className="brand">
           <span className="brand-icon">
-            <Mail size={22} />
+            <Mail />
           </span>
           BRAINMAIL<span className="brand-ai">.ai</span>
         </Link>
-        <nav className="landing-links">
+        <nav className="lp-links" aria-label="Sections de la page">
           <a href="#parcours">Parcours</a>
-          <a href="#fonctions">Fonctionnalités</a>
+          <a href="#produit">Aperçu</a>
           <a href="#confiance">Confiance</a>
           <a href="#tarifs">Tarifs</a>
         </nav>
-        <Link href={`${app}/login`} className="button secondary">
-          Se connecter <ArrowUpRight size={16} />
-        </Link>
-      </header>
-      <section className="hero">
-        <div>
-          <p className="eyebrow">
-            <span className="dot" /> VOTRE NOUVEL ASSISTANT COURRIER
-          </p>
-          <h1>
-            Aucun courrier oublié.
-            <br />
-            <span>Aucune échéance perdue.</span>
-          </h1>
-          <p className="hero-copy">
-            BRAINMAIL centralise vos courriers et emails, repère ce qui doit être
-            fait et prépare vos réponses — pour toutes vos sociétés, au même
-            endroit.
-          </p>
-          <Link href={`${app}/login?register=1`} className="button">
-            Créer mon espace <ArrowRight size={18} />
+        <div className="lp-nav-cta">
+          <Link href={`${app}/login`} className="lp-login">
+            Se connecter
           </Link>
-          <ul className="hero-badges">
-            <li>Sans carte bancaire</li>
-            <li>Données chiffrées, IA européenne</li>
-            <li>Vous validez tout</li>
+          <Link href={signup} className="button small">
+            Créer mon espace
+          </Link>
+        </div>
+      </header>
+
+      <section className="lp-hero">
+        <div className="lp-hero-copy">
+          <p className="overline">Assistant courrier pour dirigeants et cabinets</p>
+          <h1>
+            Aucun courrier oublié. <em>Aucune échéance perdue.</em>
+          </h1>
+          <p className="lp-lede">
+            BRAINMAIL lit vos courriers et vos emails, repère ce qui doit être fait et prépare vos
+            réponses — pour toutes vos sociétés, au même endroit.
+          </p>
+          <div className="lp-cta-row">
+            <Link href={signup} className="button large">
+              Créer mon espace <ArrowRight size={18} />
+            </Link>
+            <a href="#parcours" className="button ghost large">
+              Voir le parcours
+            </a>
+          </div>
+          <ul className="lp-assurances">
+            <li>
+              <Check size={15} /> Sans carte bancaire
+            </li>
+            <li>
+              <Check size={15} /> Données chiffrées, IA européenne
+            </li>
+            <li>
+              <Check size={15} /> Vous validez tout
+            </li>
           </ul>
         </div>
-        <div className="hero-visual">
-          <div className="floating-label">
-            <ShieldCheck size={16} /> Vos documents restent privés
+        {/* Le geste du produit, montré : la phrase qui prouve l'échéance est surlignée. */}
+        <div className="lp-hero-visual" aria-hidden="true">
+          <div className="letter">
+            <div className="letter-head">
+              <span>Avis d’échéance</span>
+              <span>Réf. T4-2026 · 12 nov. 2026</span>
+            </div>
+            <p className="letter-title">Cotisations sociales du 4ᵉ trimestre 2026</p>
+            <p>Madame, Monsieur,</p>
+            <p>
+              Le montant de vos cotisations s’élève à <strong>2 340,00 €</strong>. Ce montant est{' '}
+              <mark>à régler au plus tard le 15 décembre 2026</mark> par télépaiement, depuis votre
+              espace en ligne.
+            </p>
+            <p className="letter-faded">
+              Tout retard de paiement entraîne une majoration de 5 %. Un délai peut être demandé
+              avant la date d’échéance.
+            </p>
+            <div className="letter-lines">
+              <i />
+              <i />
+              <i />
+            </div>
           </div>
-          <div className="paper">
-            <div className="paper-heading">
-              <span className="brand-icon">
-                <ScanLine />
+          <div className="extract">
+            <div className="date-block soon">
+              <b>15</b>
+              <span>déc.</span>
+            </div>
+            <div className="extract-body">
+              <p className="extract-label">Échéance repérée</p>
+              <p className="extract-title">Régler les cotisations · 2 340,00 €</p>
+              <p className="extract-quote">« à régler au plus tard le 15 décembre 2026 »</p>
+              <span className="extract-confirm">
+                <Check size={14} /> Confirmer
               </span>
-              <span>
-                Un courrier.
-                <br />
-                <strong>Tout devient plus clair.</strong>
-              </span>
-            </div>
-            <div className="paper-lines">
-              <i />
-              <i />
-              <i />
-            </div>
-            <div className="example-note">APERÇU DU PARCOURS</div>
-            <div className="step-preview">
-              <span>01</span>
-              <div>
-                <strong>Photographiez</strong>
-                <p>Un QR code, votre téléphone, c’est tout.</p>
-              </div>
-            </div>
-            <div className="step-preview">
-              <span>02</span>
-              <div>
-                <strong>Comprenez</strong>
-                <p>L’essentiel et les actions à vérifier.</p>
-              </div>
-            </div>
-            <div className="step-preview">
-              <span>03</span>
-              <div>
-                <strong>Gardez le contrôle</strong>
-                <p>Vous validez les dates et les réponses.</p>
-              </div>
             </div>
           </div>
-          <div className="floating-note">
-            <Sparkles size={20} />
-            <div>
-              Votre administratif,
-              <br />
-              <strong>un peu plus léger.</strong>
-            </div>
-          </div>
+          <p className="lp-visual-note">Courrier d’exemple</p>
         </div>
       </section>
 
-      <section id="parcours" className="land-section">
-        <p className="eyebrow">LE PARCOURS</p>
-        <h2>
-          De la pile de courrier <span>à l’esprit clair.</span>
-        </h2>
-        <div className="parcours-grid">
-          <div className="parcours-step">
-            <span className="parcours-num">01</span>
-            <h3>Scannez, en 30 secondes</h3>
-            <p>
-              Un QR code affiché à l’écran, votre téléphone photographie chaque
-              page — ou glissez un PDF. Multipages, jusqu’à 50 Mo.
-            </p>
-          </div>
-          <div className="parcours-step">
-            <span className="parcours-num">02</span>
-            <h3>L’IA fait le tri</h3>
-            <p>
-              OCR puis analyse : titre, expéditeur, catégorie, résumé — et chaque
-              échéance doit être citée noir sur blanc dans le document.
-            </p>
-          </div>
-          <div className="parcours-step">
-            <span className="parcours-num">03</span>
-            <h3>Vous décidez</h3>
-            <p>
-              Confirmez les actions à suivre, relisez et validez le brouillon de
-              réponse. Rien ne part sans vous.
-            </p>
-          </div>
-        </div>
+      <section id="parcours" className="lp-section">
+        <header className="lp-section-head">
+          <p className="overline">Le parcours</p>
+          <h2>De la pile de courrier à l’esprit clair.</h2>
+        </header>
+        <ol className="lp-steps">
+          {STEPS.map(([title, text], i) => (
+            <li key={title}>
+              <span className="lp-step-n">{i + 1}</span>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </li>
+          ))}
+        </ol>
       </section>
 
-      <section id="produit" className="land-section">
-        <p className="eyebrow">L’APPLICATION</p>
-        <h2>
-          Un écran pour tout savoir, <span>rien à deviner.</span>
-        </h2>
-        <div className="app-frame" aria-hidden="true">
-          <div className="app-frame-bar">
+      <section id="produit" className="lp-section">
+        <header className="lp-section-head">
+          <p className="overline">L’application</p>
+          <h2>Un écran pour tout savoir, rien à deviner.</h2>
+          <p className="lp-section-lede">
+            Chaque courrier devient une ligne de registre : qui écrit, quoi faire, pour quand. La
+            preuve est toujours à côté de la date.
+          </p>
+        </header>
+        <div className="lp-preview" aria-hidden="true">
+          <div className="lp-preview-bar">
             <i />
             <i />
             <i />
             <span>app.brainmail.ai</span>
           </div>
-          <div className="app-frame-body">
-            <div className="app-frame-side">
-              <span className="brand-icon small">
-                <Mail size={16} />
+          <div className="lp-preview-body">
+            <div className="lp-preview-list">
+              <div className="lp-preview-head">
+                <span>Courrier</span>
+                <span>Catégorie</span>
+                <span>Échéance</span>
+                <span>État</span>
+              </div>
+              {PREVIEW.map(([title, sender, category, due, tone, state]) => (
+                <div className="lp-preview-row" key={title}>
+                  <span>
+                    <strong>{title}</strong>
+                    <small>{sender}</small>
+                  </span>
+                  <span>{category}</span>
+                  <span>{due ? <b className={`due-chip ${tone}`}>{due}</b> : '—'}</span>
+                  <span>
+                    {state ? (
+                      <b className={`chip ${state === 'Confirmée' ? 'ok' : 'warn'}`}>{state}</b>
+                    ) : (
+                      <b className="chip">Classé</b>
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <aside className="lp-preview-side">
+              <p className="overline">À vérifier</p>
+              <strong>Régler les cotisations du 4ᵉ trimestre</strong>
+              <blockquote>
+                <mark>« à régler au plus tard le 15 décembre 2026 »</mark>
+              </blockquote>
+              <span className="extract-confirm">
+                <Check size={14} /> Confirmer l’action
               </span>
-              <strong>Courrier</strong>
-              <strong className="on">Actions</strong>
-              <strong>Archives</strong>
-              <strong>Réglages</strong>
-            </div>
-            <div className="app-frame-list">
-              <div className="mail-row">
-                <div>
-                  <strong>Avis de cotisation URSSAF</strong>
-                  <span>URSSAF · Il y a 2 jours</span>
-                </div>
-                <em className="chip ok">À consulter</em>
-              </div>
-              <div className="mail-row">
-                <div>
-                  <strong>Facture d’acompte n°6</strong>
-                  <span>Raymond C. · Aujourd’hui</span>
-                </div>
-                <em className="chip ok">À consulter</em>
-              </div>
-              <div className="mail-row">
-                <div>
-                  <strong>Relance assurance habitation</strong>
-                  <span>ASSURHABIT · Il y a 3 jours</span>
-                </div>
-                <em className="chip">Analysé</em>
-              </div>
-            </div>
-            <div className="app-frame-panel">
-              <span className="eyebrow">ACTION À VÉRIFIER</span>
-              <strong>Payer la cotisation URSSAF</strong>
-              <p className="evidence">« A payer avant le 20 janvier 2027. »</p>
-              <span className="mini-btn">Confirmer</span>
-            </div>
+            </aside>
           </div>
         </div>
       </section>
 
-      <section id="fonctions" className="land-section">
-        <p className="eyebrow">FONCTIONNALITÉS</p>
-        <h2>
-          Pensé pour les <span>professionnels occupés.</span>
-        </h2>
-        <div className="land-grid">
-          {[
-            [
-              Smartphone,
-              'Scanner multipage',
-              'Un QR code, votre téléphone, chaque page photographiée dans l’ordre — de n’importe où.',
-            ],
-            [
-              FileText,
-              'Import PDF',
-              'Vos documents déjà numérisés suivent le même chemin : un PDF, un courrier.',
-            ],
-            [
-              BrainCircuit,
-              'OCR et analyse par Mistral',
-              'Lecture et analyse en appel direct à l’API de Mistral (Europe) — aucun intermédiaire, vos textes ne passent que par eux.',
-            ],
-            [
-              Clock3,
-              'Échéances sourcées',
-              'Une date n’est retenue que si elle est citée dans le document. Les rappels email arrivent avant.',
-            ],
-            [
-              UserCheck,
-              'Brouillons sous votre plume',
-              'Une réponse est préparée, jamais envoyée. Vous la relisez, l’ajustez, la validez.',
-            ],
-            [
-              Building2,
-              'Chaque société à sa place',
-              'Plusieurs espaces isolés sur un compte : artisan, SCI, cabinet — et bientôt vos clients.',
-            ],
-            [
-              Inbox,
-              'Réception email',
-              'Une adresse dédiée par espace : les emails entrants suivent le même traitement que le papier.',
-            ],
-            [
-              Trash2,
-              'Effacement réel',
-              'Supprimez un courrier : documents et fichiers chiffrés partent. Le droit à l’oubli, tout court.',
-            ],
-          ].map(([Icon, title, desc]) => {
-            const I = Icon as typeof Mail;
-            return (
-              <article key={title as string}>
-                <I size={22} />
-                <h3>{title as string}</h3>
-                <p>{desc as string}</p>
-              </article>
-            );
-          })}
+      <section id="fonctions" className="lp-section">
+        <header className="lp-section-head">
+          <p className="overline">Fonctionnalités</p>
+          <h2>Pensé pour les professionnels occupés.</h2>
+        </header>
+        <div className="lp-features">
+          {FEATURES.map(([Icon, title, text]) => (
+            <article key={title}>
+              <Icon size={22} strokeWidth={1.7} />
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
         </div>
       </section>
 
-      <section id="confiance" className="trust-band">
-        <div className="trust-inner">
-          <p className="eyebrow light">VOS DONNÉES</p>
-          <h2>
-            Le courrier est sensible. <span>Le traitement aussi.</span>
-          </h2>
-          <div className="trust-grid">
-            {[
-              [
-                Lock,
-                'Chiffré au repos',
-                'AES-256-GCM, chaque fichier lié à son espace. Aucun lien public, téléchargement authentifié.',
-              ],
-              [
-                MapPin,
-                'En Europe',
-                'Hébergement européen, OCR et analyse en direct sur l’API de Mistral (Europe). Un seul sous-traitant IA, aucun intermédiaire.',
-              ],
-              [
-                UserCheck,
-                'Humain au centre',
-                'Aucun envoi automatique, aucune action déclenchée par l’IA. Chaque échéance est confirmée par vous.',
-              ],
-              [
-                Trash2,
-                'Effacement RGPD',
-                'Suppression définitive d’un courrier et de ses fichiers chiffrés, à tout moment.',
-              ],
-            ].map(([Icon, title, desc]) => {
-              const I = Icon as typeof Mail;
-              return (
-                <div key={title as string} className="trust-item">
-                  <I size={20} />
-                  <h3>{title as string}</h3>
-                  <p>{desc as string}</p>
-                </div>
-              );
-            })}
+      <section id="confiance" className="lp-trust">
+        <div className="lp-trust-inner">
+          <header className="lp-section-head">
+            <p className="overline">Vos données</p>
+            <h2>
+              Le courrier est sensible. <em>Le traitement aussi.</em>
+            </h2>
+          </header>
+          <div className="lp-trust-grid">
+            {TRUST.map(([Icon, title, text]) => (
+              <div key={title}>
+                <Icon size={20} strokeWidth={1.7} />
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section id="tarifs" className="land-section">
-        <p className="eyebrow">TARIFS</p>
-        <h2>
-          Moins cher qu’une <span>semaine de secrétariat.</span>
-        </h2>
+      <section id="tarifs" className="lp-section">
+        <header className="lp-section-head">
+          <p className="overline">Tarifs</p>
+          <h2>Moins cher qu’une semaine de secrétariat.</h2>
+        </header>
         <div className="pricing-grid">
-          {[
-            {
-              name: 'Solo',
-              price: '29',
-              who: 'Artisans, indépendants, professions libérales.',
-              items: ['1 société', '50 courriers par mois', 'Scan, analyse, échéances', 'Rappels email'],
-              best: false,
-            },
-            {
-              name: 'Pro',
-              price: '59',
-              who: 'TPE avec plusieurs activités ou sociétés.',
-              items: ['3 sociétés', '200 courriers par mois', 'Réception email incluse', 'Rappels email'],
-              best: true,
-            },
-            {
-              name: 'Cabinet',
-              price: '149',
-              who: 'Experts-comptables, gestionnaires, syndics.',
-              items: [
-                '10 sociétés, +15 € chacune',
-                '1 000 courriers par mois',
-                'Support prioritaire',
-                'Onboarding accompagné',
-              ],
-              best: false,
-            },
-          ].map((p) => (
+          {PLANS.map((p) => (
             <article key={p.name} className={p.best ? 'price-card best' : 'price-card'}>
-              {p.best && <span className="best-tag">Le plus choisi</span>}
+              {p.best && <span className="best-tag">Recommandé</span>}
               <h3>{p.name}</h3>
               <p className="price">
                 {p.price} €<small>HT / mois</small>
@@ -353,52 +363,53 @@ export default async function Home() {
               <p className="who">{p.who}</p>
               <ul>
                 {p.items.map((it) => (
-                  <li key={it}>{it}</li>
+                  <li key={it}>
+                    <Check size={16} /> {it}
+                  </li>
                 ))}
               </ul>
-              <Link href={`${app}/login?register=1`} className="button full-width">
+              <Link
+                href={signup}
+                className={p.best ? 'button full-width' : 'button secondary full-width'}
+              >
                 Créer mon espace
               </Link>
             </article>
           ))}
         </div>
         <p className="pricing-note">
-          Annuel : 2 mois offerts. Pilote fondateur : 3 mois offerts contre votre
-          retour d’expérience — parlez-en à votre contact BRAINMAIL.
+          Annuel : 2 mois offerts. Pilote fondateur : 3 mois offerts contre votre retour
+          d’expérience — parlez-en à votre contact BRAINMAIL.
         </p>
       </section>
 
-      <section className="final-cta">
+      <section className="lp-final">
         <h2>
-          Votre pile de courrier attend. <span>Elle n’attendra pas longtemps.</span>
+          Votre pile de courrier attend. <em>Elle n’attendra pas longtemps.</em>
         </h2>
-        <Link href={`${app}/login?register=1`} className="button big">
+        <Link href={signup} className="button large">
           Créer mon espace <ArrowRight size={18} />
         </Link>
       </section>
 
-      <footer>
-        <div className="footer-cols">
-          <div>
-            <span className="brand">
-              <span className="brand-icon">
-                <Mail size={20} />
-              </span>
-              BRAINMAIL<span className="brand-ai">.ai</span>
+      <footer className="lp-footer">
+        <div>
+          <span className="brand">
+            <span className="brand-icon">
+              <Mail />
             </span>
-            <p className="muted">Votre courrier mérite moins de votre temps.</p>
-          </div>
-          <nav>
-            <a href="#parcours">Parcours</a>
-            <a href="#fonctions">Fonctionnalités</a>
-            <a href="#confiance">Confiance</a>
-            <a href="#tarifs">Tarifs</a>
-            <Link href={`${app}/login`}>Connexion</Link>
-          </nav>
+            BRAINMAIL<span className="brand-ai">.ai</span>
+          </span>
+          <p className="muted">Votre courrier mérite moins de votre temps.</p>
         </div>
-        <p className="footer-legal">
-          © {new Date().getFullYear()} WeMade SASU — Marseille, France.
-        </p>
+        <nav aria-label="Pied de page">
+          <a href="#parcours">Parcours</a>
+          <a href="#fonctions">Fonctionnalités</a>
+          <a href="#confiance">Confiance</a>
+          <a href="#tarifs">Tarifs</a>
+          <Link href={`${app}/login`}>Connexion</Link>
+        </nav>
+        <p className="lp-legal">© {new Date().getFullYear()} WeMade SASU — Marseille, France.</p>
       </footer>
     </main>
   );

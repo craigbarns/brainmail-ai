@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, BadgeCheck, CreditCard } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, Check, CreditCard, Mail } from 'lucide-react';
 
 type Status = {
   plan: string;
@@ -96,80 +96,109 @@ function Abonnement() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <a className="brand" href="/">
-          <span className="brand-icon">
-            <CreditCard size={22} />
-          </span>
-          BRAINMAIL<span className="brand-ai">.ai</span>
-        </a>
+        <div className="sidebar-brand">
+          <a className="brand" href="/">
+            <span className="brand-icon">
+              <Mail />
+            </span>
+            BRAINMAIL<span className="brand-ai">.ai</span>
+          </a>
+        </div>
         <Link className="text-button" href="/app">
           <ArrowLeft size={15} /> Retour aux courriers
         </Link>
       </aside>
-      <main className="content">
-        {params.get('checkout') === 'merci' && (
-          <div className="form-card" style={{ borderColor: 'var(--green)' }}>
-            <BadgeCheck size={18} /> Paiement reçu — l&apos;abonnement s&apos;active en quelques
-            secondes.
-          </div>
-        )}
-        {status ? (
-          <div className="form-card">
-            <h2>
-              Palier actuel : {status.label}
-              {status.active ? ' — actif' : ' — sans abonnement'}
-            </h2>
-            <p>
-              {status.limits.workspaces} société{status.limits.workspaces > 1 ? 's' : ''} ·{' '}
-              {status.limits.monthlyDocs} courriers/mois
-              {status.currentPeriodEnd
-                ? ` · renouvellement le ${new Date(status.currentPeriodEnd).toLocaleDateString('fr-FR')}`
-                : ''}
-            </p>
-            {status.active && (
-              <button
-                className="button"
-                disabled={busy === 'portal'}
-                onClick={() => void go('portal')}
-              >
-                {busy === 'portal' ? 'Ouverture…' : "Gérer l'abonnement (factures, carte, résiliation)"}
-              </button>
-            )}
-          </div>
-        ) : (
-          <p className="eyebrow-small">Chargement…</p>
-        )}
-        {error && <p className="error">{error}</p>}
-        <div className="pricing-grid">
-          {OFFERS.map((o) => (
-            <article
-              key={o.plan}
-              className={status?.plan === o.plan ? 'price-card best' : 'price-card'}
-            >
-              {status?.plan === o.plan && <span className="best-tag">Votre palier</span>}
-              <h3>{o.name}</h3>
-              <p className="price">
-                {o.price} €<small>HT / mois</small>
+      <main className="workspace-main">
+        <div className="main-content">
+          <header className="page-heading">
+            <div>
+              <p className="overline">Votre compte</p>
+              <h1>Abonnement</h1>
+              <p className="muted">
+                Choisissez le palier adapté à votre volume de courrier. Sans engagement.
               </p>
-              <ul>
-                {o.items.map((it) => (
-                  <li key={it}>{it}</li>
-                ))}
-              </ul>
-              <button
-                className="button full-width"
-                disabled={busy === o.plan || status?.plan === o.plan}
-                onClick={() => void go('checkout', o.plan)}
+            </div>
+          </header>
+          {params.get('checkout') === 'merci' && (
+            <div className="form-card billing-thanks" role="status">
+              <BadgeCheck size={20} /> Paiement reçu — l&apos;abonnement s&apos;active en quelques
+              secondes.
+            </div>
+          )}
+          {status ? (
+            <div className="form-card billing-status">
+              <div>
+                <h2>
+                  {status.label}
+                  {status.active ? ' — actif' : ' — sans abonnement'}
+                </h2>
+                <p>
+                  {status.limits.workspaces} société{status.limits.workspaces > 1 ? 's' : ''} ·{' '}
+                  {status.limits.monthlyDocs} courriers par mois
+                  {status.currentPeriodEnd
+                    ? ` · renouvellement le ${new Date(status.currentPeriodEnd).toLocaleDateString('fr-FR')}`
+                    : ''}
+                </p>
+              </div>
+              {status.active && (
+                <button
+                  className="button secondary"
+                  disabled={busy === 'portal'}
+                  onClick={() => void go('portal')}
+                >
+                  <CreditCard size={17} />
+                  {busy === 'portal' ? 'Ouverture…' : 'Gérer l’abonnement'}
+                </button>
+              )}
+            </div>
+          ) : (
+            <p className="eyebrow-small">Chargement…</p>
+          )}
+          {error && (
+            <p className="alert error" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="pricing-grid">
+            {OFFERS.map((o) => (
+              <article
+                key={o.plan}
+                className={status?.plan === o.plan ? 'price-card best' : 'price-card'}
               >
-                {busy === o.plan ? 'Redirection…' : status?.plan === o.plan ? 'Palier actuel' : `Choisir ${o.name}`}
-              </button>
-            </article>
-          ))}
+                {status?.plan === o.plan && <span className="best-tag">Votre palier</span>}
+                <h3>{o.name}</h3>
+                <p className="price">
+                  {o.price} €<small>HT / mois</small>
+                </p>
+                <ul>
+                  {o.items.map((it) => (
+                    <li key={it}>
+                      <Check size={16} /> {it}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  className={
+                    status?.plan === o.plan ? 'button secondary full-width' : 'button full-width'
+                  }
+                  disabled={busy === o.plan || status?.plan === o.plan}
+                  onClick={() => void go('checkout', o.plan)}
+                >
+                  {busy === o.plan
+                    ? 'Redirection…'
+                    : status?.plan === o.plan
+                      ? 'Palier actuel'
+                      : `Choisir ${o.name}`}
+                </button>
+              </article>
+            ))}
+          </div>
+          <p className="footnote">
+            Paiement sécurisé par Stripe. Sans engagement, résiliable à tout moment : factures,
+            carte et résiliation se gèrent depuis « Gérer l’abonnement ». TVA appliquée selon votre
+            situation.
+          </p>
         </div>
-        <p className="footnote">
-          Paiement sécurisé par Stripe. Sans engagement, résiliable à tout moment. TVA appliquée
-          selon votre situation par Stripe.
-        </p>
       </main>
     </div>
   );

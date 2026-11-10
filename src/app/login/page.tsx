@@ -55,7 +55,7 @@ export default function Login() {
         BRAINMAIL<span className="brand-ai">.ai</span>
       </Link>
       <section className="auth-card">
-        <p className="eyebrow">VOTRE COURRIER, L’ESPRIT LIBRE</p>
+        <p className="overline">Votre courrier, l’esprit libre</p>
         <h1>{register ? 'Un espace pour vous.' : 'Heureux de vous retrouver.'}</h1>
         <p className="muted">
           {register

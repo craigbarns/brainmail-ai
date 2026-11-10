@@ -81,7 +81,7 @@ export default function Scan() {
           </>
         ) : (
           <>
-            <p className="eyebrow">CAPTURE SÉCURISÉE · 15 MINUTES</p>
+            <p className="overline">Capture sécurisée · 15 minutes</p>
             <h1>
               Un courrier,
               <br />
