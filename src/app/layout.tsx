@@ -20,10 +20,14 @@ const sans = localFont({
   adjustFontFallback: 'Arial',
 });
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.brainmail.ai'),
   title: 'BRAINMAIL · Votre courrier, l’esprit libre',
   description:
     'Scannez, comprenez et organisez votre courrier. Un espace sécurisé pour chaque société.',
-  robots: { index: false, follow: false },
+  // Indexable by default; the private areas are handled per route and in
+  // robots.ts (/app, /api, /scan, /login stay out of search engines).
+  robots: { index: true, follow: true },
+  alternates: { canonical: '/' },
 };
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
