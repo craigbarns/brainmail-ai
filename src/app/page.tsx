@@ -421,11 +421,13 @@ export default async function Home() {
         </Link>
       </section>
 
-      <section className="land-section" aria-label="Questions fréquentes">
-        <p className="eyebrow">QUESTIONS FRÉQUENTES</p>
-        <h2>
-          Les questions que <span>tout le monde pose.</span>
-        </h2>
+      <section id="faq" className="lp-section" aria-label="Questions fréquentes">
+        <header className="lp-section-head">
+          <p className="overline">Questions fréquentes</p>
+          <h2>
+            Les questions que <em>tout le monde pose.</em>
+          </h2>
+        </header>
         <div className="faq-list">
           {LANDING_FAQS.map((f) => (
             <div key={f.q} className="faq-item">
