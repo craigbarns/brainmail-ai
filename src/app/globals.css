@@ -1635,14 +1635,15 @@ summary {
   padding: 96px 0;
   border-top: 1px solid var(--line);
 }
-/* Contraste AA sur fond clair pour les textes secondaires de la landing */
-.parcours-step p,
-.land-grid p,
+/* Contraste AA sur fond clair — spécificité renforcée car le minificateur
+   CSS fusionne les sélecteurs identiques et la règle grise repassait derrière */
+.parcours-grid .parcours-step p,
+.land-grid article p,
 .price-card li,
 .who,
 .pricing-note,
 .footer-cols .muted,
-.mail-row span {
+.app-frame-list .mail-row span {
   color: #5f6c65;
 }
 .hero-copy {
