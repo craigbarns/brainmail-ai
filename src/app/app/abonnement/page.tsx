@@ -140,6 +140,11 @@ function Abonnement() {
                     : ''}
                 </p>
               </div>
+              {!status.active && (
+                <Link className="button secondary" href="/app">
+                  Continuer avec l’essai
+                </Link>
+              )}
               {status.active && (
                 <button
                   className="button secondary"

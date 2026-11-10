@@ -100,9 +100,19 @@ export function Dashboard() {
     setDocs(d);
     setActions(a);
     if (ds) setDossiers(ds);
-    // No active subscription: the app opens on the plan page, not the mailbox.
-    if (m && m.billing && !m.billing.active && !location.pathname.startsWith('/app/abonnement'))
-      location.href = '/app/abonnement';
+    // No active subscription: show the plans once, on the first visit. The trial
+    // stays usable afterwards, as the landing page promises (no card required).
+    if (m && m.billing && !m.billing.active) {
+      const seen = `brainmail:plans-seen:${m.user.userId}`;
+      try {
+        if (!localStorage.getItem(seen)) {
+          localStorage.setItem(seen, '1');
+          location.href = '/app/abonnement';
+        }
+      } catch {
+        // Storage unavailable (private mode): never trap the user on the plan page.
+      }
+    }
   }, [view, search]);
   // While a mail is being analysed, poll quickly so its result shows up at once.
   const waiting = docs.some((d) => ['queued', 'processing'].includes(d.status));
