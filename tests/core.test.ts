@@ -24,6 +24,7 @@ import {
 } from '../src/lib/documents';
 import { claimJob, processJob, workOnce, remindersOnce } from '../src/lib/worker';
 import { encrypt, decrypt, hash } from '../src/lib/security';
+import { planLimits, verifyStripeSignature } from '../src/lib/billing';
 import { validateFile, getFile } from '../src/lib/storage';
 import {
   dateSchema,
@@ -577,6 +578,25 @@ test('échéance rejetée si la citation ne contient pas la date annoncée', asy
     delete process.env.MISTRAL_API_KEY;
   }
 });
+test('signature Stripe : rejet sans en-tête valide, accept du HMAC correct', () => {
+  const secret = 'whsec_test';
+  const payload = JSON.stringify({ type: 'ping', data: { object: {} } });
+  const t = Math.floor(Date.now() / 1000);
+  const v1 = createHmac('sha256', secret).update(`${t}.${payload}`).digest('hex');
+  assert.equal(verifyStripeSignature(secret, payload, `t=${t},v1=${v1}`), true);
+  assert.equal(verifyStripeSignature(secret, payload, `t=${t},v1=${'0'.repeat(64)}`), false);
+  assert.equal(verifyStripeSignature(secret, payload, null), false);
+  assert.equal(verifyStripeSignature('whsec_autre', payload, `t=${t},v1=${v1}`), false);
+});
+
+test('paliers : limites par plan et palier essai sans abonnement', () => {
+  assert.deepEqual(planLimits('solo'), { label: 'Solo', priceEnv: 'STRIPE_PRICE_SOLO', monthlyDocs: 50, workspaces: 1 });
+  assert.equal(planLimits('pro').monthlyDocs, 200);
+  assert.equal(planLimits('cabinet').workspaces, 10);
+  assert.equal(planLimits('inconnu').monthlyDocs, 20);
+  assert.equal(planLimits(null).workspaces, 1);
+});
+
 test('nettoyage : sessions, compteurs et captures expirés supprimés', async () => {
   await query(
     "INSERT INTO rate_limits(key,count,resets_at) VALUES('brainmail-stale',1,now()-interval '2 hours')",

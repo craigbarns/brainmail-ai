@@ -78,7 +78,7 @@ Toutes les variables sont décrites dans `.env.example`. Aucune clé secrète ne
 | `RESEND_ATTACHMENT_HOSTS`                          | Liste d’hôtes HTTPS **exacts** observés pour les téléchargements Resend, sans wildcard          |
 | `MEM0_API_KEY`                                     | Mémoire contextuelle optionnelle                                                                |
 | `LOCAL_DEV`, `LOCAL_DB_PATH`, `LOCAL_STORAGE_PATH` | Développement uniquement ; stockage local et PGlite refusés en production                       |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`       | Emplacements réservés ; abonnement et facturation hors MVP actuel                               |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_SOLO/PRO/CABINET` | Abonnements : checkout hébergé, webhook `/api/webhooks/stripe`, quotas par palier (50/200/1 000 courriers par mois, 1/3/10 sociétés) |
 
 Les services externes sont appelés par le worker. Mistral reçoit les fichiers à analyser **et** le texte extrait pour l’analyse (appel direct, aucun intermédiaire). Mem0 ne reçoit pas les courriers. Les restrictions réseau et les choix de modèles devront être validés avec les comptes réellement utilisés.
 

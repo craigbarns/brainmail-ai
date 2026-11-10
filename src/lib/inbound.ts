@@ -2,6 +2,7 @@ import { Resend } from 'resend';
 import { randomUUID } from 'node:crypto';
 import { query, transaction, type Row } from './db';
 import { enqueue } from './documents';
+import { billingOf, planLimits } from './billing';
 import { HttpError, limitedBody } from './security';
 import { putFile, deleteFile, validateFile, MAX_FILE } from './storage';
 // Reception lives in its own Resend account; sending (verification, reminders)
@@ -41,22 +42,30 @@ export async function acceptWebhook(request: Request) {
     ]);
   // Route only to a provisioned, exact inbox. Never accept a tenant ID supplied by a sender.
   for (const ws of workspaces) {
-    // Daily cap per workspace: a leaked address cannot trigger unbounded paid analysis.
-    const [quota] = await query<{ n: number }>(
-      "SELECT count(*)::int AS n FROM jobs WHERE workspace_id=$1 AND kind='inbound' AND created_at>now()-interval '24 hours'",
+    // Monthly cap per workspace, driven by the owner's plan: a leaked address
+    // cannot trigger unbounded paid analysis, and the cap scales with the tier.
+    const [owner] = await query<{ user_id: string }>(
+      "SELECT user_id FROM memberships WHERE workspace_id=$1 AND role='owner' LIMIT 1",
       [ws.id],
     );
-    if (quota.n >= 50) {
+    const limits = owner ? planLimits((await billingOf(owner.user_id)).plan) : null;
+    const cap = limits?.monthlyDocs ?? 20;
+    const [quota] = await query<{ n: number }>(
+      "SELECT count(*)::int AS n FROM documents WHERE workspace_id=$1 AND created_at>=date_trunc('month',now())",
+      [ws.id],
+    );
+    if (quota.n >= cap) {
       // Not a silent drop: the workspace sees this row in its integrations
       // panel (state=failed, no content stored, not retried).
       await transaction((db) =>
         db.query(
-          "INSERT INTO jobs(id,workspace_id,kind,payload,dedup_key,state,last_error) VALUES($1,$2,'inbound',$3,$4,'failed','Quota journalier de réception atteint (50/j) — message ignoré sans analyse.') ON CONFLICT(dedup_key) DO NOTHING",
+          "INSERT INTO jobs(id,workspace_id,kind,payload,dedup_key,state,last_error) VALUES($1,$2,'inbound',$3,$4,'failed',$5) ON CONFLICT(dedup_key) DO NOTHING",
           [
             randomUUID(),
             ws.id,
             JSON.stringify({ type: event.type, email_id: event.data.email_id }),
             `dropped:${ws.id}:${event.data.email_id}`,
+            `Plafond mensuel du palier ${limits?.label ?? 'Essai'} atteint (${cap} courriers/mois) — message ignoré sans analyse. Passez au palier supérieur depuis la page Abonnement.`,
           ],
         ),
       );

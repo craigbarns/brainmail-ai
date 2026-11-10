@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   Mail,
   LayoutDashboard,
+  CreditCard,
   ScanLine,
   CalendarDays,
   Archive,
@@ -217,6 +218,11 @@ export function Dashboard() {
             );
           })}
         </nav>
+        <a className="nav-link-billing" href="/app/abonnement">
+          <CreditCard size={19} />
+          Abonnement
+          {me?.billing && !me.billing.active && <span className="nav-count">!</span>}
+        </a>
         <div className="sidebar-bottom">
           <div className="private-note">
             <ShieldCheck size={18} />

@@ -3,6 +3,15 @@ import QRCode from 'qrcode';
 import { z } from 'zod';
 import { Resend } from 'resend';
 import { authenticate, register, login, sendVerification } from './auth';
+import {
+  billingOf,
+  createCheckout,
+  createPortal,
+  gateWorkspaceCreation,
+  handleStripeEvent,
+  planSchema,
+  verifyStripeSignature,
+} from './billing';
 import { query, transaction } from './db';
 import {
   HttpError,
@@ -72,6 +81,15 @@ async function route(request: Request): Promise<Response> {
   }
   if (parts.join('/') === 'webhooks/resend' && method === 'POST') {
     await acceptWebhook(request);
+    return json({ received: true });
+  }
+  if (parts.join('/') === 'webhooks/stripe' && method === 'POST') {
+    // Stripe signs the raw body; verify before parsing. No session, no Origin.
+    const raw = await request.text();
+    const secret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!secret || !verifyStripeSignature(secret, raw, request.headers.get('stripe-signature')))
+      throw new HttpError(400, 'Signature webhook invalide.');
+    await handleStripeEvent(JSON.parse(raw) as { type: string; data: { object: Record<string, unknown> } });
     return json({ received: true });
   }
   if (!['GET', 'HEAD'].includes(method)) originCheck(request);
@@ -192,7 +210,29 @@ async function route(request: Request): Promise<Response> {
       "SELECT kind,state,last_error,created_at FROM jobs WHERE workspace_id=$1 AND kind IN ('inbound','memory') ORDER BY created_at DESC LIMIT 10",
       [ws],
     );
-    return json({ user, workspaces, workspace, integrations: integrations(), integrationJobs });
+    return json({
+      user,
+      workspaces,
+      workspace,
+      billing: await billingOf(user.userId),
+      integrations: integrations(),
+      integrationJobs,
+    });
+  }
+  if (parts[0] === 'billing') {
+    if (parts[1] === 'status' && method === 'GET') return json(await billingOf(user.userId));
+    if (user.role !== 'owner') throw new HttpError(403, 'Accès propriétaire requis.');
+    if (parts[1] === 'checkout' && method === 'POST') {
+      const b = await body(request);
+      const plan = planSchema.parse(b.plan);
+      const appUrl = process.env.APP_URL || new URL(request.url).origin;
+      return json({ url: await createCheckout(user.userId, user.email, plan, appUrl) });
+    }
+    if (parts[1] === 'portal' && method === 'POST') {
+      const appUrl = process.env.APP_URL || new URL(request.url).origin;
+      return json({ url: await createPortal(user.userId, appUrl) });
+    }
+    throw new HttpError(404, 'Route inconnue.');
   }
   if (parts[0] === 'workspaces' && method === 'POST') {
     const b = await body(request);
@@ -210,6 +250,7 @@ async function route(request: Request): Promise<Response> {
       return json({ ok: true });
     }
     await rateLimit(`workspace:${user.userId}`, 10, 86400);
+    await gateWorkspaceCreation(user.userId);
     const name = z.string().min(2).max(80).parse(b.name);
     const id = randomUUID();
     await transaction(async (db) => {
