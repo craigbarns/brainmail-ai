@@ -122,6 +122,8 @@ export async function createCheckout(userId: string, email: string, plan: PlanNa
     'tax_id_collection[enabled]': 'true',
     'customer_update[address]': 'auto',
     'customer_update[name]': 'auto',
+    // Founder-pilot codes (PILOTE: 100 % × 3 months, 5 redemptions max).
+    allow_promotion_codes: 'true',
     success_url: `${appUrl}/app/abonnement?checkout=merci`,
     cancel_url: `${appUrl}/app/abonnement`,
     'subscription_data[metadata][user_id]': userId,
