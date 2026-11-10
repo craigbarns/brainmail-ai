@@ -224,7 +224,12 @@ export async function cleanupOnce() {
   // accumulate forever (sessions keep email hashes, jobs keep event payloads).
   await query("DELETE FROM sessions WHERE expires_at<now()-interval '7 days'");
   await query("DELETE FROM verification_tokens WHERE expires_at<now()-interval '1 day'");
-  await query("DELETE FROM rate_limits WHERE resets_at<now()");
+  await query('DELETE FROM rate_limits WHERE resets_at<now()');
+  // Abandoned captures that never received a page (QR never used, import refused
+  // after a crash): no file exists for them, so removing the row is the whole job.
+  await query(
+    "DELETE FROM documents d WHERE d.status='capturing' AND d.source IN ('scan','pdf') AND d.created_at<now()-interval '1 day' AND NOT EXISTS(SELECT 1 FROM document_files f WHERE f.document_id=d.id) AND NOT EXISTS(SELECT 1 FROM scans s WHERE s.document_id=d.id AND s.expires_at>now())",
+  );
   await query("DELETE FROM scans WHERE expires_at<now()-interval '1 day'");
   await query("DELETE FROM jobs WHERE state='done' AND created_at<now()-interval '30 days'");
   await query(

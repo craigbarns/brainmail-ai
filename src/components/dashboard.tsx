@@ -23,6 +23,7 @@ import {
   Download,
   Copy,
   Trash2,
+  Camera,
 } from 'lucide-react';
 import { api, post, patch, formatDate } from './client';
 type Data = Record<string, any>;
@@ -56,15 +57,23 @@ export function Dashboard() {
     setDocs(d);
     setActions(a);
   }, [view, search]);
+  // While a mail is being analysed, poll quickly so its result shows up at once.
+  const waiting = docs.some((d) => ['queued', 'processing'].includes(d.status));
   useEffect(() => {
     void refresh().catch((e) => setError(e.message));
-    const id = setInterval(() => {
-      // A hidden tab does not need live data; skip the round-trips.
-      if (document.hidden) return;
-      void refresh().catch((e) => setError(e.message));
-    }, 15000);
+    const id = setInterval(
+      () => {
+        // A hidden tab does not need live data; skip the round-trips.
+        if (document.hidden) return;
+        void refresh().catch((e) => setError(e.message));
+      },
+      waiting ? 4000 : 15000,
+    );
     return () => clearInterval(id);
-  }, [refresh]);
+  }, [refresh, waiting]);
+  // A phone takes the pictures itself: no QR code to aim at with the same device.
+  const [phone, setPhone] = useState(false);
+  useEffect(() => setPhone(window.matchMedia('(pointer: coarse)').matches), []);
   useEffect(() => {
     if (!scan?.id) return;
     let stopped = false;
@@ -102,12 +111,20 @@ export function Dashboard() {
     if (!files?.length) return;
     const all = Array.from(files);
     await task(async () => {
+      const refused: string[] = [];
       for (const file of all) {
         const d = await post('documents');
-        await api(`documents/${d.id}/files`, { method: 'POST', body: file });
-        await post(`documents/${d.id}/complete`);
+        try {
+          await api(`documents/${d.id}/files`, { method: 'POST', body: file });
+          await post(`documents/${d.id}/complete`);
+        } catch (e) {
+          // A refused file must not leave an empty mail in the list.
+          await api(`documents/${d.id}`, { method: 'DELETE' }).catch(() => {});
+          refused.push(`${file.name} — ${(e as Error).message}`);
+        }
       }
-      setNotice('Import terminé. L’analyse va démarrer.');
+      if (refused.length < all.length) setNotice('Import terminé. L’analyse va démarrer.');
+      if (refused.length) setError(`Non importé : ${refused.join(' ; ')}`);
     });
   }
   const pending = actions.filter((a) => !a.done),
@@ -261,7 +278,7 @@ export function Dashboard() {
                     ? 'Vérifiez les dates proposées et gardez le fil de vos actions.'
                     : view === 'archive'
                       ? 'Retrouvez les documents que vous avez archivés.'
-                      : 'Choisissez le contexte de votre société et vos intégrations.'}
+                      : 'Indiquez le contexte de votre société pour des réponses qui vous ressemblent.'}
               </p>
             </div>
             {view !== 'settings' && (
@@ -334,7 +351,11 @@ export function Dashboard() {
                   </div>
                   <div>
                     <h2>Le papier entre. La clarté suit.</h2>
-                    <p>Scannez le QR code avec votre téléphone. Vos pages arrivent ici.</p>
+                    <p>
+                      {phone
+                        ? 'Prenez vos pages en photo avec ce téléphone.'
+                        : 'Scannez le QR code avec votre téléphone. Vos pages arrivent ici.'}
+                    </p>
                   </div>
                   <button
                     className="button secondary"
@@ -461,28 +482,30 @@ export function Dashboard() {
             <button className="close" aria-label="Fermer le scanner" onClick={() => setScan(null)}>
               <X />
             </button>
-            <p className="eyebrow">DE L’ORDINATEUR AU TÉLÉPHONE</p>
-            <h2 id="scan-title">Votre téléphone devient un scanner.</h2>
-            <p className="muted">Ouvrez l’appareil photo de votre téléphone et visez ce QR code.</p>
-            <div className="qr-wrap">
-              <img src={scan.qr} alt="QR code temporaire pour scanner le courrier" />
-            </div>
-            <div className="scan-status">
-              <span className="dot" />
-              {scan.completed_at
-                ? 'Courrier transmis pour analyse'
-                : scan.paired
-                  ? `${scan.document?.files?.length || 0} page(s) reçue(s) · Téléphone connecté`
-                  : 'En attente de votre téléphone'}
-            </div>
-            <p className="subtle">
-              Expire à{' '}
-              {new Date(scan.expiresAt || scan.expires_at).toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}{' '}
-              · Un seul téléphone
+            <p className="eyebrow">
+              {phone ? 'AVEC CE TÉLÉPHONE' : 'DE L’ORDINATEUR AU TÉLÉPHONE'}
             </p>
+            <h2 id="scan-title">
+              {phone ? 'Photographiez votre courrier.' : 'Votre téléphone devient un scanner.'}
+            </h2>
+            <p className="muted">
+              {phone
+                ? 'Prenez chaque page en photo. L’analyse démarre dès que vous avez terminé.'
+                : 'Ouvrez l’appareil photo de votre téléphone et visez ce QR code.'}
+            </p>
+            {phone && !scan.completed_at ? (
+              <>
+                <a className="button full capture-here" href={scan.url}>
+                  <Camera size={18} /> Prendre en photo avec ce téléphone
+                </a>
+                <details className="other-device">
+                  <summary>Utiliser un autre appareil</summary>
+                  <ScanCode scan={scan} />
+                </details>
+              </>
+            ) : (
+              <ScanCode scan={scan} />
+            )}
             {scan.completed_at ? (
               <button
                 className="button full"
@@ -496,9 +519,11 @@ export function Dashboard() {
               </button>
             ) : (
               <>
-                <a className="text-button" href={scan.url} target="_blank" rel="noreferrer">
-                  Ouvrir la capture sur cet appareil
-                </a>
+                {!phone && (
+                  <a className="text-button" href={scan.url} target="_blank" rel="noreferrer">
+                    Ouvrir la capture sur cet appareil
+                  </a>
+                )}
                 <button
                   className="text-button"
                   onClick={() =>
@@ -508,7 +533,7 @@ export function Dashboard() {
                     })
                   }
                 >
-                  Révoquer ce QR code
+                  {phone ? 'Annuler' : 'Révoquer ce QR code'}
                 </button>
               </>
             )}
@@ -517,6 +542,7 @@ export function Dashboard() {
       )}
       {selected && (
         <DocumentPanel
+          key={`${selected.id}:${selected.status}`}
           document={selected}
           close={() => setSelected(null)}
           task={task}
@@ -524,6 +550,31 @@ export function Dashboard() {
         />
       )}
     </div>
+  );
+}
+function ScanCode({ scan }: { scan: Data }) {
+  return (
+    <>
+      <div className="qr-wrap">
+        <img src={scan.qr} alt="QR code temporaire pour scanner le courrier" />
+      </div>
+      <div className="scan-status">
+        <span className="dot" />
+        {scan.completed_at
+          ? 'Courrier transmis pour analyse'
+          : scan.paired
+            ? `${scan.document?.files?.length || 0} page(s) reçue(s) · Téléphone connecté`
+            : 'En attente de votre téléphone'}
+      </div>
+      <p className="subtle">
+        Expire à{' '}
+        {new Date(scan.expiresAt || scan.expires_at).toLocaleTimeString('fr-FR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}{' '}
+        · Un seul téléphone
+      </p>
+    </>
   );
 }
 function Preferences({
@@ -559,14 +610,22 @@ function Preferences({
             placeholder="Activité, ton souhaité, signature à utiliser…"
           />
         </label>
-        <label className="checkbox-label">
-          <input type="checkbox" checked={memory} onChange={(e) => setMemory(e.target.checked)} />{' '}
-          Synchroniser ces préférences avec Mem0
-        </label>
-        <p className="subtle">
-          Seules ces préférences sont partagées. La base de BRAINMAIL reste la référence. Désactiver
-          arrête les futures synchronisations ; cela n’efface pas les copies déjà transmises.
-        </p>
+        {me.integrations.memory && (
+          <>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={memory}
+                onChange={(e) => setMemory(e.target.checked)}
+              />{' '}
+              Mémoriser ces préférences pour les prochaines réponses
+            </label>
+            <p className="subtle">
+              Seules ces préférences sont alors partagées avec notre service de mémoire (Mem0).
+              Désactiver arrête les futurs partages ; cela n’efface pas les copies déjà transmises.
+            </p>
+          </>
+        )}
         <button
           className="button"
           onClick={() =>
@@ -580,42 +639,57 @@ function Preferences({
         </button>
       </section>
       <section className="panel">
-        <h2>Connexions</h2>
-        <p className="muted">
-          État de configuration. Une clé présente ne garantit pas que le service est opérationnel.
-        </p>
-        {[
-          ['ocr', 'Mistral OCR'],
-          ['llm', 'OpenRouter'],
-          ['email', 'Resend · rappels'],
-          ['memory', 'Mem0'],
-          ['inbox', 'Resend · réception'],
-        ].map(([key, label]) => (
+        <h2>Vos services</h2>
+        {(me.integrations.local
+          ? [
+              ['ocr', 'Lecture des courriers · Mistral OCR'],
+              ['llm', 'Résumé et échéances · OpenRouter'],
+              ['email', 'Rappels par email · Resend'],
+              ['inbox', 'Réception par email · Resend'],
+              ['memory', 'Mémoire · Mem0'],
+            ]
+          : [
+              ['ocr', 'Lecture de vos courriers'],
+              ['llm', 'Résumé et échéances'],
+              ['email', 'Rappels par email'],
+              ['inbox', 'Réception par email'],
+            ]
+        ).map(([key, label]) => (
           <div className="integration-row" key={key}>
             <span>{label}</span>
             <span className={`status ${me.integrations[key] ? 'ready' : 'capturing'}`}>
-              {me.integrations[key] ? 'Configuré' : 'À connecter'}
+              {me.integrations[key] ? 'Actif' : 'Indisponible'}
             </span>
           </div>
         ))}
-        <div className="integration-row">
-          <span>Stockage</span>
-          <small>{me.integrations.storage}</small>
-        </div>
+        {me.integrations.local && (
+          <div className="integration-row">
+            <span>Stockage</span>
+            <small>{me.integrations.storage}</small>
+          </div>
+        )}
         {me.integrationJobs?.some((j: Data) => j.state === 'failed') && (
           <p className="alert error">
-            Une synchronisation mémoire ou réception email a échoué. Vérifiez la configuration et
-            les tâches du worker.
+            Un email reçu ou une synchronisation n’a pas abouti. Renvoyez l’email ou importez sa
+            pièce jointe en PDF.
           </p>
         )}
-        <h3>Votre adresse de réception</h3>
+        <h3>Recevoir vos courriers par email</h3>
         {me.workspace.inbox_address ? (
           <>
+            <p className="subtle">
+              Transférez un email ou une facture à cette adresse : il arrive ici comme un courrier.
+            </p>
             <p className="inbox-address">{me.workspace.inbox_address}</p>
             <button
               className="button secondary small"
               onClick={() => {
-                if (!confirm('Changer cette adresse ? Les emails envoyés à l’ancienne adresse seront ignorés.')) return;
+                if (
+                  !confirm(
+                    'Changer cette adresse ? Les emails envoyés à l’ancienne adresse seront ignorés.',
+                  )
+                )
+                  return;
                 void task(async () => {
                   await post('inbox', { rotate: true });
                   setNotice('Nouvelle adresse de réception créée. L’ancienne est ignorée.');
@@ -628,7 +702,9 @@ function Preferences({
         ) : (
           <>
             <p className="subtle">
-              À activer après validation du domaine de réception dans Resend.
+              {me.integrations.inbox
+                ? 'Créez une adresse dédiée : chaque email que vous y transférez arrive ici comme un courrier.'
+                : 'Bientôt disponible : une adresse dédiée pour transférer vos emails et factures.'}
             </p>
             <button
               disabled={!me.integrations.inbox}
@@ -636,11 +712,11 @@ function Preferences({
               onClick={() =>
                 void task(async () => {
                   await post('inbox');
-                  setNotice('Boîte de réception créée.');
+                  setNotice('Adresse de réception créée.');
                 })
               }
             >
-              Activer ma boîte
+              Créer mon adresse
             </button>
           </>
         )}
@@ -797,6 +873,22 @@ function DocumentPanel({
     [approved, setApproved] = useState(Boolean(d.draft_approved_at)),
     [copied, setCopied] = useState(false);
   const reload = async () => update(await api(`documents/${d.id}`));
+  // Follow a capture or an analysis in progress without asking for a click.
+  const pending = ['capturing', 'queued', 'processing'].includes(d.status);
+  useEffect(() => {
+    if (!pending) return;
+    let open = true;
+    const id = setInterval(() => {
+      if (document.hidden) return;
+      api(`documents/${d.id}`)
+        .then((fresh) => open && update(fresh))
+        .catch(() => {});
+    }, 3000);
+    return () => {
+      open = false;
+      clearInterval(id);
+    };
+  }, [pending, d.id, update]);
   const localTask = (fn: () => Promise<void>) =>
     task(async () => {
       await fn();
@@ -844,11 +936,9 @@ function DocumentPanel({
           </button>
         )}
         {['queued', 'processing'].includes(d.status) && (
-          <p className="alert">
-            L’analyse est en cours.{' '}
-            <button className="text-button" onClick={() => void localTask(async () => {})}>
-              Actualiser
-            </button>
+          <p className="alert analysing" role="status">
+            <Loader2 size={14} className="spin" /> Analyse en cours. Le résultat s’affichera ici
+            dans un instant.
           </p>
         )}
         {d.status === 'capturing' && (
@@ -969,8 +1059,7 @@ function DocumentPanel({
         <button
           className="button secondary"
           onClick={() => {
-            if (!confirm('Supprimer ce courrier et tous ses fichiers ? Action définitive.'))
-              return;
+            if (!confirm('Supprimer ce courrier et tous ses fichiers ? Action définitive.')) return;
             void task(async () => {
               await api(`documents/${d.id}`, { method: 'DELETE' });
               close();

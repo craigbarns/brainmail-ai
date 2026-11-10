@@ -8,7 +8,8 @@ export default function Scan() {
     [busy, setBusy] = useState(false),
     [done, setDone] = useState(false),
     [error, setError] = useState(''),
-    [previews, setPreviews] = useState<string[]>([]);
+    [previews, setPreviews] = useState<string[]>([]),
+    [member, setMember] = useState(false);
   const started = useRef(false);
   const urls = useRef<string[]>([]);
   useEffect(() => {
@@ -23,6 +24,10 @@ export default function Scan() {
         setReady(true);
       })
       .catch((e) => setError(e.message));
+    // Signed in on this very phone? Then the mail can be opened here, no computer needed.
+    fetch('/api/me', { cache: 'no-store' })
+      .then((r) => setMember(r.ok))
+      .catch(() => {});
     return () => {
       urls.current.forEach(URL.revokeObjectURL);
     };
@@ -63,9 +68,16 @@ export default function Scan() {
             </div>
             <h1>C’est dans la boîte.</h1>
             <p>
-              Vos {pages} page{pages > 1 ? 's' : ''} ont été transmises. Retrouvez l’analyse sur
-              votre ordinateur.
+              {pages > 1 ? `Vos ${pages} pages ont été transmises.` : 'Votre page a été transmise.'}{' '}
+              {member
+                ? 'L’analyse démarre : le résultat arrive dans votre espace.'
+                : 'Retrouvez l’analyse sur votre ordinateur.'}
             </p>
+            {member && (
+              <a className="button full" href="/app">
+                Voir mes courriers
+              </a>
+            )}
           </>
         ) : (
           <>

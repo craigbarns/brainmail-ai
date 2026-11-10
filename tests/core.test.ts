@@ -575,6 +575,23 @@ test('nettoyage : sessions, compteurs et captures expirés supprimés', async ()
   assert.equal((await query("SELECT 1 FROM sessions WHERE token_hash='stale-token'")).length, 0);
   assert.equal((await query('SELECT 1 FROM scans WHERE id=$1', [stale.id])).length, 0);
 });
+test('nettoyage : capture vide abandonnée supprimée, capture avec pages conservée', async () => {
+  const { cleanupOnce } = await import('../src/lib/worker');
+  const empty = await createScan(a.ws);
+  const withPage = await createScan(a.ws);
+  await appendFile(a.ws, withPage.documentId, jpg, withPage.id);
+  const recent = await createScan(a.ws);
+  await query("UPDATE documents SET created_at=now()-interval '2 days' WHERE id=ANY($1::uuid[])", [
+    [empty.documentId, withPage.documentId],
+  ]);
+  await query("UPDATE scans SET expires_at=now()-interval '1 hour' WHERE id=ANY($1::uuid[])", [
+    [empty.id, withPage.id],
+  ]);
+  await cleanupOnce();
+  await assert.rejects(documentDetail(a.ws, empty.documentId));
+  assert.equal((await documentDetail(a.ws, withPage.documentId)).files.length, 1);
+  assert.equal((await documentDetail(a.ws, recent.documentId)).status, 'capturing');
+});
 test('connexion : une seule adresse IP ne peut pas bloquer le compte d’un client', async () => {
   const login = (ip: string, password: string) =>
     handle(

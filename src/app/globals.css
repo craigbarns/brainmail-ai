@@ -909,6 +909,24 @@ p {
   text-align: center;
   width: 100%;
 }
+.scan-modal .capture-here {
+  margin-top: 22px;
+  padding: 15px 18px;
+  font-size: 14px;
+}
+.scan-modal .other-device {
+  margin-top: 18px;
+  text-align: center;
+}
+.alert.analysing {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+.scan-card > .button {
+  margin-top: 18px;
+}
 .drawer-backdrop {
   justify-content: flex-end;
   padding: 0;

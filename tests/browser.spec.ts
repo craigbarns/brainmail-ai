@@ -50,10 +50,48 @@ test('ordinateur et téléphone : capture, synchronisation et absence de faux r�
   await expect(page.getByRole('heading', { name: 'Votre calendrier' })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Préférences', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Connexions' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Vos services' })).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
   ).toBeTruthy();
   expect(errors).toEqual([]);
+  await context.close();
+});
+test('téléphone seul : photo directe, sans QR code, puis retour à ses courriers', async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const phone = await context.newPage();
+  await phone.goto('/login?register=1');
+  await phone.getByLabel('Nom de votre espace').fill('Artisan mobile');
+  await phone.getByLabel('Adresse email').fill('mobile@example.test');
+  await phone.getByLabel(/Mot de passe/).fill('test-password-long-123!');
+  await phone.getByRole('button', { name: 'Créer mon espace', exact: true }).click();
+  await phone.waitForURL('**/app');
+  await phone.getByRole('button', { name: 'Scanner un courrier', exact: true }).click();
+  // The QR code stays folded away: the phone in hand is the scanner.
+  await expect(phone.getByAltText('QR code temporaire pour scanner le courrier')).toBeHidden();
+  await phone.getByRole('link', { name: 'Prendre en photo avec ce téléphone' }).click();
+  await phone.waitForURL('**/scan');
+  const image = await sharp({ create: { width: 20, height: 30, channels: 3, background: '#fff' } })
+    .jpeg()
+    .toBuffer();
+  await phone
+    .getByLabel('Photographier une page', { exact: true })
+    .setInputFiles({ name: 'page.jpg', mimeType: 'image/jpeg', buffer: image });
+  await expect(phone.getByText('1 / 20 pages transmises')).toBeVisible();
+  await phone.getByRole('button', { name: 'Terminer et analyser' }).click();
+  await expect(phone.getByText('Votre page a été transmise.')).toBeVisible();
+  await phone.getByRole('link', { name: 'Voir mes courriers' }).click();
+  await phone.waitForURL('**/app');
+  // Without AI keys the analysis fails explicitly; the panel must show it by itself.
+  await phone.getByRole('button', { name: /Nouveau courrier/ }).click();
+  await expect(phone.getByText('Mistral OCR non configuré.', { exact: true })).toBeVisible({
+    timeout: 20000,
+  });
   await context.close();
 });
