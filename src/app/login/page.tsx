@@ -21,7 +21,10 @@ export default function Login() {
         .then(() => setNotice('Adresse vérifiée. Vous pouvez vous connecter.'))
         .catch((e) => setError(e.message));
     }
-    const reset = new URLSearchParams(location.search).get('reset');
+    // The token travels in the fragment; links already sent used the query string.
+    const reset =
+      new URLSearchParams(location.hash.slice(1)).get('reset') ||
+      new URLSearchParams(location.search).get('reset');
     if (reset) {
       history.replaceState(null, '', '/login');
       setResetToken(reset);

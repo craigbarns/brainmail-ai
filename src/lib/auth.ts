@@ -113,7 +113,7 @@ export async function sendResetEmail(email: string, token: string) {
     from: process.env.RESEND_FROM,
     to: email,
     subject: 'Nouveau mot de passe BRAINMAIL',
-    text: `Réinitialisez votre mot de passe (lien valable 2 heures) :\n${process.env.APP_URL}/login?reset=${token}\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre mot de passe reste inchangé.`,
+    text: `Réinitialisez votre mot de passe (lien valable 2 heures) :\n${process.env.APP_URL}/login#reset=${token}\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre mot de passe reste inchangé.`,
   });
   if (error) throw new HttpError(503, 'Service email indisponible. Réessayez plus tard.');
   return true;
@@ -126,7 +126,11 @@ export async function resetPassword(token: string, password: string) {
   if (!row) throw new HttpError(410, 'Lien expiré ou déjà utilisé. Demandez un nouveau lien.');
   const encoded = await passwordHash(password);
   await transaction(async (db) => {
-    await db.query('UPDATE users SET password_hash=$1 WHERE id=$2', [encoded, row.user_id]);
+    // Receiving the link proves ownership of the address: it counts as verification.
+    await db.query('UPDATE users SET password_hash=$1,verified=true WHERE id=$2', [
+      encoded,
+      row.user_id,
+    ]);
     await db.query('UPDATE password_resets SET used=true WHERE token_hash=$1', [hash(token)]);
     // Every session dies with the password: a stolen session cannot survive a reset.
     await db.query('DELETE FROM sessions WHERE user_id=$1', [row.user_id]);

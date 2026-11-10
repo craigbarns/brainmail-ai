@@ -164,6 +164,7 @@ const LANDING_FAQS = [
   },
 ];
 
+export const metadata = { alternates: { canonical: '/' } };
 export default async function Home() {
   // APP_URL exists only at runtime on Railway, not during the Docker build:
   // render per request so the links target the application domain.
@@ -407,8 +408,8 @@ export default async function Home() {
         </div>
         <p className="pricing-note">
           Prix HT ; TVA française 20 % ajoutée au paiement, autoliquidée pour les entreprises de
-          l&apos;UE avec un numéro de TVA valide. Annuel : 2 mois offerts. Pilote fondateur : 3
-          mois offerts contre votre retour d’expérience — parlez-en à votre contact BRAINMAIL.
+          l&apos;UE avec un numéro de TVA valide. Annuel : 2 mois offerts. Pilote fondateur : 3 mois
+          offerts contre votre retour d’expérience — parlez-en à votre contact BRAINMAIL.
         </p>
       </section>
 
@@ -470,9 +471,27 @@ export default async function Home() {
                 description:
                   'BRAINMAIL centralise le courrier papier et les emails de vos sociétés, extrait les échéances avec leur citation dans le document, et prépare les réponses à valider.',
                 offers: [
-                  { '@type': 'Offer', name: 'Solo', price: '29', priceCurrency: 'EUR', description: '1 société, 50 courriers par mois' },
-                  { '@type': 'Offer', name: 'Pro', price: '59', priceCurrency: 'EUR', description: '3 sociétés, 200 courriers par mois' },
-                  { '@type': 'Offer', name: 'Cabinet', price: '149', priceCurrency: 'EUR', description: '10 sociétés, 1 000 courriers par mois' },
+                  {
+                    '@type': 'Offer',
+                    name: 'Solo',
+                    price: '29',
+                    priceCurrency: 'EUR',
+                    description: '1 société, 50 courriers par mois',
+                  },
+                  {
+                    '@type': 'Offer',
+                    name: 'Pro',
+                    price: '59',
+                    priceCurrency: 'EUR',
+                    description: '3 sociétés, 200 courriers par mois',
+                  },
+                  {
+                    '@type': 'Offer',
+                    name: 'Cabinet',
+                    price: '149',
+                    priceCurrency: 'EUR',
+                    description: '10 sociétés, 1 000 courriers par mois',
+                  },
                 ],
               },
               {
@@ -509,8 +528,8 @@ export default async function Home() {
           <Link href={`${app}/login`}>Connexion</Link>
         </nav>
         <p className="lp-legal">
-          © {new Date().getFullYear()} WeMade SASU — Marseille, France. SIREN 832 419 428. Prix
-          HT ; TVA française 20 % ajoutée au paiement.
+          © {new Date().getFullYear()} WeMade SASU — Marseille, France. SIREN 832 419 428. Prix HT ;
+          TVA française 20 % ajoutée au paiement.
         </p>
       </footer>
     </main>

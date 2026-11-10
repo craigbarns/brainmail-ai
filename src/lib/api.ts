@@ -2,12 +2,20 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import QRCode from 'qrcode';
 import { z } from 'zod';
 import { Resend } from 'resend';
-import { authenticate, register, login, sendVerification, requestPasswordReset, resetPassword } from './auth';
+import {
+  authenticate,
+  register,
+  login,
+  sendVerification,
+  requestPasswordReset,
+  resetPassword,
+} from './auth';
 import {
   billingOf,
   createCheckout,
   createPortal,
   gateWorkspaceCreation,
+  gateMonthlyDocs,
   handleStripeEvent,
   planSchema,
   verifyStripeSignature,
@@ -93,7 +101,9 @@ async function route(request: Request): Promise<Response> {
     const secret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!secret || !verifyStripeSignature(secret, raw, request.headers.get('stripe-signature')))
       throw new HttpError(400, 'Signature webhook invalide.');
-    await handleStripeEvent(JSON.parse(raw) as { type: string; data: { object: Record<string, unknown> } });
+    await handleStripeEvent(
+      JSON.parse(raw) as { type: string; data: { object: Record<string, unknown> } },
+    );
     return json({ received: true });
   }
   if (!['GET', 'HEAD'].includes(method)) originCheck(request);
@@ -109,13 +119,12 @@ async function route(request: Request): Promise<Response> {
       const ip = clientIp(request);
       await rateLimit(`forgot-ip:${ip}`, 10);
       await rateLimit(`forgot:${email}`, 3);
-      const sent = await requestPasswordReset(email);
+      await requestPasswordReset(email);
+      // Same answer whether the account exists or not: no way to probe a list of emails.
       return json({
         ok: true,
-        sent,
-        message: sent
-          ? 'Consultez votre boîte email : un lien de réinitialisation vient de partir.'
-          : 'Si un compte existe pour cette adresse, un lien de réinitialisation a été envoyé.',
+        message:
+          'Si un compte existe pour cette adresse, un lien de réinitialisation vient de partir. Consultez votre boîte email.',
       });
     }
     if (parts[1] === 'reset') {
@@ -353,6 +362,7 @@ async function route(request: Request): Promise<Response> {
   if (parts[0] === 'scans') {
     if (method === 'POST' && !parts[1]) {
       await rateLimit(`scan:${ws}`, 30, 3600);
+      await gateMonthlyDocs(ws, user.userId);
       const scan = await createScan(ws);
       const link = `${process.env.APP_URL || 'http://localhost:3000'}/scan#${scan.token}`;
       return json(
@@ -394,6 +404,7 @@ async function route(request: Request): Promise<Response> {
       }
       if (method === 'POST') {
         await rateLimit(`documents:${ws}`, 50, 3600);
+        await gateMonthlyDocs(ws, user.userId);
         return json({ id: await createDocument(ws, 'pdf') }, 201);
       }
     }

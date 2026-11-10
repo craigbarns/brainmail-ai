@@ -24,7 +24,7 @@ import {
 } from '../src/lib/documents';
 import { claimJob, processJob, workOnce, remindersOnce } from '../src/lib/worker';
 import { encrypt, decrypt, hash } from '../src/lib/security';
-import { planLimits, verifyStripeSignature } from '../src/lib/billing';
+import { planLimits, verifyStripeSignature, billingOf } from '../src/lib/billing';
 import { validateFile, getFile } from '../src/lib/storage';
 import {
   dateSchema,
@@ -452,7 +452,12 @@ test('mémoire : filtre par société et rejet des préférences obsolètes', as
 test('dossiers : création, rattachement, cycle de vie et isolation', async () => {
   const d = await request('documents', 'POST', undefined, a.cookie);
   const id = d.data.id;
-  const cr = await request('dossiers', 'POST', { label: 'Dossier URSSAF 2027', documentId: id }, a.cookie);
+  const cr = await request(
+    'dossiers',
+    'POST',
+    { label: 'Dossier URSSAF 2027', documentId: id },
+    a.cookie,
+  );
   assert.equal(cr.status, 201);
   // isolation : l'espace de b ne voit pas le dossier de a
   assert.equal((await request('dossiers', 'GET', undefined, b.cookie)).data.length, 0);
@@ -460,14 +465,25 @@ test('dossiers : création, rattachement, cycle de vie et isolation', async () =
   assert.equal(list.data[0].docs, 1);
   assert.equal(list.data[0].label, 'Dossier URSSAF 2027');
   // rattachement à un dossier d'un autre espace : refusé
-  const nope = await request(`documents/${id}/dossier`, 'PUT', { dossierId: randomUUID() }, a.cookie);
+  const nope = await request(
+    `documents/${id}/dossier`,
+    'PUT',
+    { dossierId: randomUUID() },
+    a.cookie,
+  );
   assert.equal(nope.status, 404);
   // détail du courrier : le dossier est exposé
   const det = await request(`documents/${id}`, 'GET', undefined, a.cookie);
   assert.equal(det.data.dossier.label, 'Dossier URSSAF 2027');
   // cycle de vie
-  assert.equal((await request(`dossiers/${cr.data.id}`, 'PATCH', { status: 'resolu' }, a.cookie)).status, 200);
-  assert.equal((await request(`dossiers/${cr.data.id}`, 'PATCH', { status: 'resolu' }, b.cookie)).status, 404);
+  assert.equal(
+    (await request(`dossiers/${cr.data.id}`, 'PATCH', { status: 'resolu' }, a.cookie)).status,
+    200,
+  );
+  assert.equal(
+    (await request(`dossiers/${cr.data.id}`, 'PATCH', { status: 'resolu' }, b.cookie)).status,
+    404,
+  );
   // détachement
   const det2 = await request(`documents/${id}/dossier`, 'PUT', { dossierId: null }, a.cookie);
   assert.equal(det2.status, 200);
@@ -590,7 +606,12 @@ test('signature Stripe : rejet sans en-tête valide, accept du HMAC correct', ()
 });
 
 test('paliers : limites par plan et palier essai sans abonnement', () => {
-  assert.deepEqual(planLimits('solo'), { label: 'Solo', priceEnv: 'STRIPE_PRICE_SOLO', monthlyDocs: 50, workspaces: 1 });
+  assert.deepEqual(planLimits('solo'), {
+    label: 'Solo',
+    priceEnv: 'STRIPE_PRICE_SOLO',
+    monthlyDocs: 50,
+    workspaces: 1,
+  });
   assert.equal(planLimits('pro').monthlyDocs, 200);
   assert.equal(planLimits('cabinet').workspaces, 10);
   assert.equal(planLimits('inconnu').monthlyDocs, 20);
@@ -703,4 +724,73 @@ test('échéance : année et délais relatifs vérifiés dans la citation', () =
     dateSupported('2026-12-15', 'Vous disposez d’un délai jusqu’au 15 décembre 2026'),
     true,
   );
+});
+test('plafond mensuel : scans et imports refusés une fois le quota du palier atteint', async () => {
+  const c = await account('quota@example.test');
+  assert.equal((await request('scans', 'POST', {}, c.cookie)).status, 201);
+  // Essai : 20 courriers par mois. Un est déjà créé par le scan ci-dessus.
+  for (let n = 0; n < 19; n++)
+    await query("INSERT INTO documents(id,workspace_id,source) VALUES($1,$2,'pdf')", [
+      randomUUID(),
+      c.ws,
+    ]);
+  const scan = await request('scans', 'POST', {}, c.cookie);
+  assert.equal(scan.status, 402);
+  assert.match(scan.data.error, /Plafond de 20 courriers/);
+  assert.equal((await request('documents', 'POST', {}, c.cookie)).status, 402);
+});
+test('abonnement résilié ou impayé : retour aux limites de l’essai', async () => {
+  await account('resilie@example.test');
+  const [u] = await query<{ id: string }>(
+    "SELECT id FROM users WHERE email='resilie@example.test'",
+  );
+  await query(
+    "INSERT INTO billing(user_id,plan,subscription_status) VALUES($1,'pro','active') ON CONFLICT(user_id) DO UPDATE SET plan='pro',subscription_status='active'",
+    [u.id],
+  );
+  assert.equal((await billingOf(u.id)).limits.workspaces, 3);
+  for (const status of ['canceled', 'unpaid', 'past_due']) {
+    await query('UPDATE billing SET subscription_status=$1 WHERE user_id=$2', [status, u.id]);
+    const b = await billingOf(u.id);
+    assert.equal(b.active, false);
+    assert.equal(b.limits.workspaces, 1);
+    assert.equal(b.limits.monthlyDocs, 20);
+  }
+});
+test('mot de passe oublié : même réponse que le compte existe ou non', async () => {
+  const known = await request('auth/forgot', 'POST', { email: 'alpha@example.test' });
+  const unknown = await request('auth/forgot', 'POST', { email: 'inconnu@example.test' });
+  assert.equal(known.status, 200);
+  assert.deepEqual(known.data, unknown.data);
+  assert.equal('sent' in known.data, false);
+});
+test('réinitialisation : le lien reçu vaut vérification de l’adresse', async () => {
+  await account('nonverifie@example.test');
+  const [u] = await query<{ id: string }>(
+    "UPDATE users SET verified=false WHERE email='nonverifie@example.test' RETURNING id",
+  );
+  const token = 'r'.repeat(40);
+  await query(
+    "INSERT INTO password_resets(user_id,token_hash,expires_at) VALUES($1,$2,now()+interval '1 hour')",
+    [u.id, hash(token)],
+  );
+  const password = 'un-nouveau-mot-de-passe!';
+  assert.equal((await request('auth/reset', 'POST', { token, password })).status, 200);
+  const login = await request('auth/login', 'POST', { email: 'nonverifie@example.test', password });
+  assert.equal(login.status, 200);
+  // Le lien ne sert qu'une fois.
+  assert.equal((await request('auth/reset', 'POST', { token, password })).status, 410);
+});
+test('signature Stripe : message ancien refusé, rotation de secret acceptée', () => {
+  const secret = 'whsec_test';
+  const payload = JSON.stringify({ type: 'customer.subscription.updated', data: { object: {} } });
+  const sign = (t: number) => createHmac('sha256', secret).update(`${t}.${payload}`).digest('hex');
+  const now = Math.floor(Date.now() / 1000);
+  const old = now - 3600;
+  assert.equal(verifyStripeSignature(secret, payload, `t=${old},v1=${sign(old)}`), false);
+  assert.equal(
+    verifyStripeSignature(secret, payload, `t=${now},v1=${'0'.repeat(64)},v1=${sign(now)}`),
+    true,
+  );
+  assert.equal(verifyStripeSignature(secret, payload, `t=abc,v1=${sign(now)}`), false);
 });

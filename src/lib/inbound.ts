@@ -48,7 +48,7 @@ export async function acceptWebhook(request: Request) {
       "SELECT user_id FROM memberships WHERE workspace_id=$1 AND role='owner' LIMIT 1",
       [ws.id],
     );
-    const limits = owner ? planLimits((await billingOf(owner.user_id)).plan) : null;
+    const limits = owner ? (await billingOf(owner.user_id)).limits : null;
     const cap = limits?.monthlyDocs ?? 20;
     const [quota] = await query<{ n: number }>(
       "SELECT count(*)::int AS n FROM documents WHERE workspace_id=$1 AND created_at>=date_trunc('month',now())",

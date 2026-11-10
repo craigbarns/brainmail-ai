@@ -8,7 +8,12 @@ import { HttpError } from './security';
 export const PLANS = {
   solo: { label: 'Solo', priceEnv: 'STRIPE_PRICE_SOLO', monthlyDocs: 50, workspaces: 1 },
   pro: { label: 'Pro', priceEnv: 'STRIPE_PRICE_PRO', monthlyDocs: 200, workspaces: 3 },
-  cabinet: { label: 'Cabinet', priceEnv: 'STRIPE_PRICE_CABINET', monthlyDocs: 1000, workspaces: 10 },
+  cabinet: {
+    label: 'Cabinet',
+    priceEnv: 'STRIPE_PRICE_CABINET',
+    monthlyDocs: 1000,
+    workspaces: 10,
+  },
 } as const;
 export type PlanName = keyof typeof PLANS;
 export const planSchema = z.enum(['solo', 'pro', 'cabinet']);
@@ -35,7 +40,8 @@ export async function billingOf(userId: string) {
     status: row?.subscription_status ?? 'inactive',
     active,
     currentPeriodEnd: row?.current_period_end ?? null,
-    limits: planLimits(plan),
+    // A cancelled or unpaid subscription falls back to the trial limits.
+    limits: active ? planLimits(plan) : TRIAL,
   };
 }
 
@@ -87,7 +93,10 @@ export async function stripeRequest(path: string, params: Record<string, string>
   });
   const data = (await res.json()) as Record<string, unknown>;
   if (!res.ok)
-    throw new HttpError(502, `Erreur Stripe : ${String((data.error as { message?: string })?.message ?? res.status)}`);
+    throw new HttpError(
+      502,
+      `Erreur Stripe : ${String((data.error as { message?: string })?.message ?? res.status)}`,
+    );
   return data;
 }
 
@@ -107,7 +116,12 @@ async function ensureCustomer(userId: string, email: string) {
   return customer.id as string;
 }
 
-export async function createCheckout(userId: string, email: string, plan: PlanName, appUrl: string) {
+export async function createCheckout(
+  userId: string,
+  email: string,
+  plan: PlanName,
+  appUrl: string,
+) {
   const price = process.env[PLANS[plan].priceEnv];
   if (!price) throw new HttpError(503, 'Prix non configuré pour ce palier.');
   const customer = await ensureCustomer(userId, email);
@@ -137,7 +151,8 @@ export async function createPortal(userId: string, appUrl: string) {
     'SELECT stripe_customer_id FROM billing WHERE user_id=$1',
     [userId],
   );
-  if (!row?.stripe_customer_id) throw new HttpError(400, "Aucun abonnement à gérer. Choisissez d'abord un palier.");
+  if (!row?.stripe_customer_id)
+    throw new HttpError(400, "Aucun abonnement à gérer. Choisissez d'abord un palier.");
   const session = await stripeRequest('/billing_portal/sessions', {
     customer: row.stripe_customer_id,
     return_url: `${appUrl}/app/abonnement`,
@@ -145,19 +160,27 @@ export async function createPortal(userId: string, appUrl: string) {
   return session.url as string;
 }
 
+const STRIPE_TOLERANCE_SECONDS = 300;
 // Stripe signature scheme: signed payload is `${t}.${body}`, HMAC-SHA256 with
 // the webhook secret, compared in constant time against each v1 signature.
-export function verifyStripeSignature(secret: string, body: string, header: string | null): boolean {
+export function verifyStripeSignature(
+  secret: string,
+  body: string,
+  header: string | null,
+): boolean {
   if (!header) return false;
-  const parts = Object.fromEntries(
-    header.split(',').map((p) => p.split('=') as [string, string]),
-  );
-  const t = parts['t'];
-  const v1 = parts['v1'];
-  if (!t || !v1) return false;
+  const pairs = header.split(',').map((p) => p.trim().split('=') as [string, string]);
+  const t = pairs.find(([k]) => k === 't')?.[1];
+  // Stripe sends several v1 signatures while a signing secret is being rotated.
+  const signatures = pairs.filter(([k]) => k === 'v1').map(([, v]) => v);
+  if (!t || !/^\d+$/.test(t) || !signatures.length) return false;
+  // A captured event must not be replayable later (e.g. "active" after a cancellation).
+  if (Math.abs(Date.now() / 1000 - Number(t)) > STRIPE_TOLERANCE_SECONDS) return false;
   const expected = createHmac('sha256', secret).update(`${t}.${body}`).digest();
-  const given = Buffer.from(v1, 'hex');
-  return given.length === expected.length && timingSafeEqual(given, expected);
+  return signatures.some((v1) => {
+    const given = Buffer.from(v1, 'hex');
+    return given.length === expected.length && timingSafeEqual(given, expected);
+  });
 }
 
 type StripeEvent = {
@@ -169,11 +192,11 @@ const subObj = z.object({
   id: z.string(),
   status: z.string(),
   customer: z.string(),
-  'current_period_end': z.number().optional(),
-  'items': z.object({
+  current_period_end: z.number().optional(),
+  items: z.object({
     data: z.array(z.object({ price: z.object({ id: z.string() }) })).min(1),
   }),
-  'metadata': z.record(z.string(), z.string()).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
 });
 
 // Applies a subscription state to the billing row matched by subscription id,
@@ -183,8 +206,7 @@ export async function applySubscription(sub: Record<string, unknown>) {
   const priceId = s.items.data[0].price.id;
   const plan =
     (Object.entries(PLANS).find(([, p]) => process.env[p.priceEnv] === priceId)?.[0] as
-      | PlanName
-      | undefined) ?? null;
+      PlanName | undefined) ?? null;
   const period = s.current_period_end ? new Date(s.current_period_end * 1000) : null;
   await transaction(async (db) => {
     const { rows } = await db.query<{ user_id: string }>(

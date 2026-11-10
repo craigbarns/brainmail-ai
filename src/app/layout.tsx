@@ -27,7 +27,6 @@ export const metadata: Metadata = {
   // Indexable by default; the private areas are handled per route and in
   // robots.ts (/app, /api, /scan, /login stay out of search engines).
   robots: { index: true, follow: true },
-  alternates: { canonical: '/' },
 };
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
