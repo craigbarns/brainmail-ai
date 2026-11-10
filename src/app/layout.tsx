@@ -21,9 +21,22 @@ const sans = localFont({
 });
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.brainmail.ai'),
-  title: 'BRAINMAIL · Votre courrier, l’esprit libre',
+  title: {
+    default: 'BRAINMAIL — Logiciel de gestion du courrier par IA',
+    template: '%s | BRAINMAIL',
+  },
   description:
-    'Scannez, comprenez et organisez votre courrier. Un espace sécurisé pour chaque société.',
+    'Logiciel de gestion du courrier par IA : scan mobile, lecture de documents, suivi des échéances, emails et réponses à valider pour les professionnels.',
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    siteName: 'BRAINMAIL.ai',
+    title: 'BRAINMAIL — Logiciel de gestion du courrier par IA',
+    description:
+      'Centralisez les courriers papier et emails de vos sociétés, identifiez les échéances et validez les réponses proposées par IA.',
+    url: 'https://www.brainmail.ai',
+  },
+  twitter: { card: 'summary', title: 'BRAINMAIL — Gestion du courrier par IA' },
   // Indexable by default; the private areas are handled per route and in
   // robots.ts (/app, /api, /scan, /login stay out of search engines).
   robots: { index: true, follow: true },

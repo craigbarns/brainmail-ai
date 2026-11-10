@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { connection } from 'next/server';
 import {
@@ -16,6 +17,12 @@ import {
   PenLine,
   Check,
 } from 'lucide-react';
+const SOLUTIONS = [
+  { slug: 'courrier-auto-entrepreneur', title: 'Courrier pour auto-entrepreneurs', description: 'Classez les courriers URSSAF, factures et assurances et suivez leurs échéances.' },
+  { slug: 'courrier-multi-societes', title: 'Gestion du courrier multi-sociétés', description: 'Séparez les documents de chaque entreprise et retrouvez toutes les actions à suivre.' },
+  { slug: 'courrier-expert-comptable', title: 'Courrier pour experts-comptables', description: 'Aidez vos clients à centraliser leurs documents et à confirmer leurs échéances.' },
+  { slug: 'courrier-sci', title: 'Gestion du courrier de SCI', description: 'Suivez les avis d’imposition, appels de fonds, courriers de locataires et assurances.' },
+] as const;
 const STEPS = [
   [
     'Scannez, en 30 secondes',
@@ -139,6 +146,10 @@ const PREVIEW = [
 // FAQ de la landing : visible ET balisée (même contenu, même ordre).
 const LANDING_FAQS = [
   {
+    q: 'Qu’est-ce que BRAINMAIL ?',
+    a: 'BRAINMAIL est un logiciel de gestion du courrier par intelligence artificielle pour les entreprises et les cabinets. Il centralise les courriers papier numérisés et les emails, classe les documents, extrait les échéances avec leur citation et prépare des brouillons de réponse soumis à validation.',
+  },
+  {
     q: 'Comment BRAINMAIL traite-t-il mes courriers papier ?',
     a: 'Vous scannez chaque courrier depuis votre téléphone grâce à un QR code temporaire : les pages arrivent dans votre espace, l’IA les lit, les classe et en extrait les échéances. Aucune application à installer.',
   },
@@ -164,7 +175,17 @@ const LANDING_FAQS = [
   },
 ];
 
-export const metadata = { alternates: { canonical: '/' } };
+export const metadata: Metadata = {
+  title: { absolute: 'Logiciel de gestion du courrier par IA | BRAINMAIL' },
+  description:
+    'BRAINMAIL centralise vos courriers papier et emails, analyse les documents avec l’IA, suit les échéances et prépare les réponses. Pour TPE, SCI et cabinets.',
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'Logiciel de gestion du courrier par IA | BRAINMAIL',
+    description: 'Scannez et centralisez vos courriers, retrouvez vos échéances et validez les réponses préparées par IA.',
+    url: 'https://www.brainmail.ai/',
+  },
+};
 export default async function Home() {
   // APP_URL exists only at runtime on Railway, not during the Docker build:
   // render per request so the links target the application domain.
@@ -184,6 +205,7 @@ export default async function Home() {
           <a href="#parcours">Parcours</a>
           <a href="#produit">Aperçu</a>
           <a href="#confiance">Confiance</a>
+          <a href="#solutions">Solutions</a>
           <a href="#tarifs">Tarifs</a>
         </nav>
         <div className="lp-nav-cta">
@@ -198,13 +220,14 @@ export default async function Home() {
 
       <section className="lp-hero">
         <div className="lp-hero-copy">
-          <p className="overline">Assistant courrier pour dirigeants et cabinets</p>
+          <p className="overline">Logiciel de gestion du courrier par IA pour entreprises</p>
           <h1>
             Aucun courrier oublié. <em>Aucune échéance perdue.</em>
           </h1>
           <p className="lp-lede">
-            BRAINMAIL lit vos courriers et vos emails, repère ce qui doit être fait et prépare vos
-            réponses — pour toutes vos sociétés, au même endroit.
+            BRAINMAIL est un logiciel de gestion du courrier par IA : il centralise vos courriers
+            papier et emails, extrait les échéances avec leur citation et prépare des réponses à
+            valider — pour toutes vos sociétés, au même endroit.
           </p>
           <div className="lp-cta-row">
             <Link href={signup} className="button large">
@@ -356,6 +379,32 @@ export default async function Home() {
         </div>
       </section>
 
+      <section id="solutions" className="lp-section">
+        <header className="lp-section-head">
+          <p className="overline">Solutions par métier</p>
+          <h2>Un logiciel de gestion du courrier adapté à votre activité.</h2>
+          <p className="lp-section-lede">
+            Entrepreneurs, SCI, dirigeants de plusieurs sociétés ou cabinets comptables :
+            découvrez comment BRAINMAIL organise les documents et les échéances de chacun.
+          </p>
+        </header>
+        <div className="lp-features">
+          {SOLUTIONS.map((solution) => (
+            <article key={solution.slug}>
+              <h3>
+                <Link href={`/solutions/${solution.slug}`} style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 4 }}>
+                  {solution.title}
+                </Link>
+              </h3>
+              <p>{solution.description}</p>
+            </article>
+          ))}
+        </div>
+        <p style={{ marginTop: 24 }}>
+          <Link href="/solutions">Voir toutes nos solutions par métier <ArrowRight size={16} aria-hidden="true" /></Link>
+        </p>
+      </section>
+
       <section id="confiance" className="lp-trust">
         <div className="lp-trust-inner">
           <header className="lp-section-head">
@@ -447,6 +496,7 @@ export default async function Home() {
             '@graph': [
               {
                 '@type': 'Organization',
+                '@id': 'https://www.brainmail.ai/#organization',
                 name: 'WeMade SASU',
                 url: 'https://www.brainmail.ai',
                 email: 'gregory@brainmail.ai',
@@ -464,6 +514,8 @@ export default async function Home() {
               },
               {
                 '@type': 'SoftwareApplication',
+                '@id': 'https://www.brainmail.ai/#software',
+                publisher: { '@id': 'https://www.brainmail.ai/#organization' },
                 name: 'BRAINMAIL.ai',
                 applicationCategory: 'BusinessApplication',
                 operatingSystem: 'Web',
@@ -522,6 +574,7 @@ export default async function Home() {
           <a href="#fonctions">Fonctionnalités</a>
           <a href="#confiance">Confiance</a>
           <a href="#tarifs">Tarifs</a>
+          <Link href="/solutions">Solutions</Link>
           <Link href="/legal/mentions-legales">Mentions légales</Link>
           <Link href="/legal/cgv">CGV</Link>
           <Link href="/legal/confidentialite">Confidentialité</Link>

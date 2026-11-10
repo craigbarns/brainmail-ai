@@ -23,7 +23,7 @@ export const SEO_PAGES: SeoPage[] = [
     title: 'Gérer le courrier de son auto-entreprise ou micro-entreprise',
     description:
       'Factures, URSSAF, impôts, assurances : BRAINMAIL lit vos courriers, extrait les échéances avec la preuve, et vous rappelle avant la date. À partir de 29 € HT/mois.',
-    h1: 'Le courrier de votre auto-entreprise, traité en 10 minutes par mois',
+    h1: 'Suivez le courrier de votre auto-entreprise sans oublier les échéances',
     eyebrow: 'ARTISANS · INDÉPENDANTS · MICRO-ENTREPRISE',
     intro: [
       'Un auto-entrepreneur reçoit chaque mois des courriers qui comptent : avis URSSAF, appels de cotisations, échéances d’impôts, courriers d’assurances, factures de fournisseurs. Chacun part dans une pile, et la pile gagne.',
@@ -91,7 +91,7 @@ export const SEO_PAGES: SeoPage[] = [
     title: 'Gérer le courrier de plusieurs sociétés au même endroit',
     description:
       '3, 5, 10 sociétés : BRAINMAIL centralise les courriers de toutes vos structures, sépare les échéances par société et vous rappelle à temps. À partir de 59 € HT/mois.',
-    h1: 'Trois sociétés, dix sociétés : un seul endroit pour ne rien oublier',
+    h1: 'Gérez le courrier de plusieurs sociétés dans un seul outil',
     eyebrow: 'DIRIGEANTS MULTI-SOCIÉTÉS · SCI · HOLDINGS',
     intro: [
       'Quand on dirige plusieurs structures — une holding, une SCI, une société d’exploitation — le courrier se multiplie et se disperse : chaque banque, chaque assurance, chaque administration écrit séparément. Le même avis fiscal, en trois exemplaires différents, à trois dates différentes.',
@@ -159,7 +159,7 @@ export const SEO_PAGES: SeoPage[] = [
     title: 'Le suivi du courrier pour les cabinets et experts-comptables',
     description:
       'Offrez à vos clients un espace où ne rien oublier : BRAINMAIL centralise leurs courriers, source les échéances et vous garde la vue. 149 € HT/mois pour 10 sociétés.',
-    h1: 'Votre cabinet, héros du courrier de ses clients',
+    h1: 'Suivi du courrier et des échéances clients pour experts-comptables',
     eyebrow: 'EXPERTS-COMPTABLES · GESTIONNAIRES · SYNDICS',
     intro: [
       'Un cabinet gère des dizaines de sociétés clientes, et le courrier reste le point aveugle : l’avis URSSAF qui traîne chez le client, l’assurance relue trop tard, la date de télédéclaration découverte après la date limite.',

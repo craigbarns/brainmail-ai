@@ -17,8 +17,8 @@ export function SeoArticle({ page }: { page: SeoPage }) {
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://www.brainmail.ai/' },
-          { '@type': 'ListItem', position: 2, name: 'Solutions', item: 'https://www.brainmail.ai/#tarifs' },
-          { '@type': 'ListItem', position: 3, name: page.h1 },
+          { '@type': 'ListItem', position: 2, name: 'Solutions', item: 'https://www.brainmail.ai/solutions' },
+          { '@type': 'ListItem', position: 3, name: page.h1, item: url },
         ],
       },
       {
@@ -54,6 +54,10 @@ export function SeoArticle({ page }: { page: SeoPage }) {
         </span>
         BRAINMAIL<span className="brand-ai">.ai</span>
       </Link>
+      <nav aria-label="Fil d’Ariane" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 24 }}>
+        <Link href="/">Accueil</Link><span>›</span><Link href="/solutions">Solutions</Link><span>›</span>
+        <span aria-current="page">{page.h1}</span>
+      </nav>
       <p className="overline" style={{ marginTop: 28 }}>
         {page.eyebrow}
       </p>
@@ -112,6 +116,7 @@ export function SeoArticle({ page }: { page: SeoPage }) {
       </div>
       <nav className="legal-nav" aria-label="Pages du site">
         <Link href="/">Accueil</Link>
+        <Link href="/solutions">Solutions</Link>
         <Link href="/#tarifs">Tarifs</Link>
         <Link href="/legal/confidentialite">Confidentialité</Link>
         <Link href="/legal/cgv">CGV</Link>
