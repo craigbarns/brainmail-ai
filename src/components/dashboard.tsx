@@ -100,6 +100,9 @@ export function Dashboard() {
     setDocs(d);
     setActions(a);
     if (ds) setDossiers(ds);
+    // No active subscription: the app opens on the plan page, not the mailbox.
+    if (m && m.billing && !m.billing.active && !location.pathname.startsWith('/app/abonnement'))
+      location.href = '/app/abonnement';
   }, [view, search]);
   // While a mail is being analysed, poll quickly so its result shows up at once.
   const waiting = docs.some((d) => ['queued', 'processing'].includes(d.status));
