@@ -233,9 +233,9 @@ export default async function Home() {
             <Link href={signup} className="button large">
               Créer mon espace <ArrowRight size={18} />
             </Link>
-            <a href="#parcours" className="button ghost large">
-              Voir le parcours
-            </a>
+            <Link href="/solutions" className="button ghost large">
+              Voir les solutions
+            </Link>
           </div>
           <ul className="lp-assurances">
             <li>
