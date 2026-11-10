@@ -96,20 +96,23 @@ const MONTHS_ABBR = [
 const RELATIVE_DELAY =
   /(?:^|[\s,;(])(?:[àa] compter|[àa] partir|[àa] dater|(?:dans un d[ée]lai de|dans les|sous) \S+ (?:jours?|semaines?|mois))(?=$|[\s,;.)])/u;
 // A deadline only counts if the quoted passage actually contains that date.
+// OCR text frequently drops accents (« fevrier »): deaccent both sides.
 export function dateSupported(dueDate: string | null, evidence: string): boolean {
-  if (!dueDate || !/^\d{4}-\d{2}-\d{2}$/.test(dueDate) || !evidence) return false;
-  const day = String(Number(dueDate.slice(8, 10)));
-  const dayPadded = dueDate.slice(8, 10);
-  const month = String(Number(dueDate.slice(5, 7)));
-  const monthPadded = dueDate.slice(5, 7);
-  const name = MONTHS_FR[Number(month) - 1];
-  const abbr = MONTHS_ABBR[Number(month) - 1];
-  const quoted = evidence
+if (!dueDate || !/^\d{4}-\d{2}-\d{2}$/.test(dueDate) || !evidence) return false;
+const day = String(Number(dueDate.slice(8, 10)));
+const dayPadded = dueDate.slice(8, 10);
+const month = String(Number(dueDate.slice(5, 7)));
+const monthPadded = dueDate.slice(5, 7);
+const deaccent = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const name = deaccent(MONTHS_FR[Number(month) - 1]);
+const abbr = deaccent(MONTHS_ABBR[Number(month) - 1]);
+const quoted = deaccent(
+  evidence
     .toLowerCase()
     .replace(/\u00a0/g, ' ')
     .replace(/[\u2019\u2018'`]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .replace(/1er\b/g, '1');
+    .replace(/\s+/g, ' '),
+).replace(/1er\b/g, '1');
   // « sous 30 jours à compter du 10 février » quotes the start of a delay, not
   // the deadline: computing it (working days, receipt date) is left to a human.
   if (RELATIVE_DELAY.test(quoted)) return false;
