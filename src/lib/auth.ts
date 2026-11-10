@@ -60,7 +60,21 @@ export async function register(email: string, password: string, name: string) {
       [hash(token), id],
     );
   });
+  // Best effort : un échec de notification n'empêche jamais l'inscription.
+  await notifyOwnerSignup(email, name).catch(() => undefined);
   return { id, token };
+}
+// Notification propriétaire : chaque nouvelle inscription est signalée
+// immédiatement, sans jamais bloquer la création du compte en cas d'échec.
+export async function notifyOwnerSignup(email: string, name: string) {
+  const to = process.env.OWNER_NOTIFY_EMAIL;
+  if (!to || !process.env.RESEND_API_KEY || !process.env.RESEND_FROM) return;
+  await new Resend(process.env.RESEND_API_KEY).emails.send({
+    from: process.env.RESEND_FROM,
+    to,
+    subject: `🔔 Nouveau compte BRAINMAIL : ${email}`,
+    text: `Nouvelle inscription sur BRAINMAIL.ai\n\nEmail : ${email}\nEspace : ${name}\nDate : ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}\n\nAccueil conseillé : rappelle-lui le code PILOTE (3 mois offerts) au paiement si tu veux le faire entrer en pilote.`,
+  });
 }
 export async function sendVerification(email: string, token: string) {
   if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM) return false;
