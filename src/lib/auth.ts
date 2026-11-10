@@ -88,7 +88,7 @@ export async function requestPasswordReset(email: string) {
     ]);
     await db.query(
       "INSERT INTO password_resets(user_id,token_hash,expires_at) VALUES($1,$2,now()+interval '2 hours')",
-      [hash(token), user.id],
+      [user.id, hash(token)],
     );
   });
   return sendResetEmail(email, token);
