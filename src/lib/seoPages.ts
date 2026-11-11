@@ -11,6 +11,8 @@ export type SeoPage = {
   description: string; // meta description ~155 car.
   h1: string;
   eyebrow: string;
+  crumb: string; // short label for the breadcrumb
+  summary: string; // two sentences an assistant can quote as the answer
   intro: string[];
   sections: SeoSection[];
   faqs: SeoFaq[];
@@ -20,6 +22,9 @@ export type SeoPage = {
 export const SEO_PAGES: SeoPage[] = [
   {
     slug: 'courrier-auto-entrepreneur',
+    crumb: 'Auto-entrepreneurs',
+    summary:
+      'BRAINMAIL lit les courriers d’un auto-entrepreneur (URSSAF, impôts, assurances, factures) depuis une photo prise au téléphone, en extrait chaque échéance avec la phrase du document qui la prouve, et envoie un rappel par email avant la date. Palier Solo : 29 € HT par mois, sans engagement.',
     title: 'Gérer le courrier de son auto-entreprise ou micro-entreprise',
     description:
       'Factures, URSSAF, impôts, assurances : BRAINMAIL lit vos courriers, extrait les échéances avec la preuve, et vous rappelle avant la date. À partir de 29 € HT/mois.',
@@ -88,6 +93,9 @@ export const SEO_PAGES: SeoPage[] = [
   },
   {
     slug: 'courrier-multi-societes',
+    crumb: 'Multi-sociétés',
+    summary:
+      'BRAINMAIL donne un espace séparé à chaque société (holding, SCI, société d’exploitation) et réunit toutes leurs échéances dans un seul calendrier, chacune prouvée par une citation du courrier. Palier Pro : 59 € HT par mois pour 3 sociétés, sans engagement.',
     title: 'Gérer le courrier de plusieurs sociétés au même endroit',
     description:
       '3, 5, 10 sociétés : BRAINMAIL centralise les courriers de toutes vos structures, sépare les échéances par société et vous rappelle à temps. À partir de 59 € HT/mois.',
@@ -142,7 +150,7 @@ export const SEO_PAGES: SeoPage[] = [
       },
       {
         q: 'Puis-je donner accès à mon comptable ?',
-        a: 'Le service prévoit des comptes par utilisateur avec des rôles propriétaire et membre. Votre comptable peut consulter les documents et dossiers de l’espace concerné sans disposer de vos identifiants personnels.',
+        a: 'Aujourd’hui, vous partagez un document en le téléchargeant ou en copiant son résumé et sa réponse : tout reste lisible sans BRAINMAIL. L’invitation d’un comptable ou d’un associé avec son propre accès est en préparation ; elle sera annoncée sur cette page.',
       },
       {
         q: 'Combien coûte le suivi du courrier de trois sociétés ?',
@@ -156,6 +164,9 @@ export const SEO_PAGES: SeoPage[] = [
   },
   {
     slug: 'courrier-expert-comptable',
+    crumb: 'Experts-comptables',
+    summary:
+      'BRAINMAIL permet à un cabinet comptable de suivre le courrier de ses clients : chaque client a son espace, chaque échéance est citée dans le document, et le cabinet voit ce qui arrive avant la date. Palier Cabinet : 149 € HT par mois pour 10 sociétés, puis 15 € par société.',
     title: 'Le suivi du courrier pour les cabinets et experts-comptables',
     description:
       'Offrez à vos clients un espace où ne rien oublier : BRAINMAIL centralise leurs courriers, source les échéances et vous garde la vue. 149 € HT/mois pour 10 sociétés.',
@@ -224,6 +235,9 @@ export const SEO_PAGES: SeoPage[] = [
   },
   {
     slug: 'courrier-sci',
+    crumb: 'SCI',
+    summary:
+      'BRAINMAIL suit le courrier d’une SCI (avis d’impôts, appels de fonds, assurances, courriers de locataires) à partir d’une photo, garde l’historique de chaque document et rappelle les échéances par email, chacune prouvée par une citation. À partir de 29 € HT par mois.',
     title: 'Gérer le courrier d’une SCI : loyers, charges, travaux, impôts',
     description:
       'Avis d’impôts, appels de fonds, courriers de locataires, assurances : BRAINMAIL suit les échéances de votre SCI et vous rappelle à temps. À partir de 29 € HT/mois.',
@@ -250,7 +264,7 @@ export const SEO_PAGES: SeoPage[] = [
         points: [
           'Avis d’imposition, appels de fonds, factures : tout classé au même endroit',
           'Échéances confirmées avec la citation du document',
-          'Dossiers suivis jusqu’à la clôture, consultables par les associés',
+          'Dossiers suivis jusqu’à la clôture, avec tout l’historique',
           'Palier Solo (1 société) ou Pro (3 sociétés) selon vos montages',
           'Données chiffrées en Europe, analyse par Mistral (France)',
         ],
@@ -273,7 +287,7 @@ export const SEO_PAGES: SeoPage[] = [
       },
       {
         q: 'Les associés peuvent-ils consulter les documents de la SCI ?',
-        a: 'Le service gère des rôles : le propriétaire de l’espace peut donner un accès membre aux associés ou au comptable, qui consultent les documents et dossiers avec leurs propres identifiants.',
+        a: 'Pas encore avec leur propre accès : cette invitation est en préparation. Dès maintenant, chaque document et sa réponse se téléchargent et se transmettent en un clic, et l’historique de la SCI reste conservé et chiffré dans l’espace.',
       },
       {
         q: 'Que coûte la gestion du courrier d’une SCI ?',

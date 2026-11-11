@@ -18,10 +18,28 @@ import {
   Check,
 } from 'lucide-react';
 const SOLUTIONS = [
-  { slug: 'courrier-auto-entrepreneur', title: 'Courrier pour auto-entrepreneurs', description: 'Classez les courriers URSSAF, factures et assurances et suivez leurs échéances.' },
-  { slug: 'courrier-multi-societes', title: 'Gestion du courrier multi-sociétés', description: 'Séparez les documents de chaque entreprise et retrouvez toutes les actions à suivre.' },
-  { slug: 'courrier-expert-comptable', title: 'Courrier pour experts-comptables', description: 'Aidez vos clients à centraliser leurs documents et à confirmer leurs échéances.' },
-  { slug: 'courrier-sci', title: 'Gestion du courrier de SCI', description: 'Suivez les avis d’imposition, appels de fonds, courriers de locataires et assurances.' },
+  {
+    slug: 'courrier-auto-entrepreneur',
+    title: 'Courrier pour auto-entrepreneurs',
+    description: 'Classez les courriers URSSAF, factures et assurances et suivez leurs échéances.',
+  },
+  {
+    slug: 'courrier-multi-societes',
+    title: 'Gestion du courrier multi-sociétés',
+    description:
+      'Séparez les documents de chaque entreprise et retrouvez toutes les actions à suivre.',
+  },
+  {
+    slug: 'courrier-expert-comptable',
+    title: 'Courrier pour experts-comptables',
+    description: 'Aidez vos clients à centraliser leurs documents et à confirmer leurs échéances.',
+  },
+  {
+    slug: 'courrier-sci',
+    title: 'Gestion du courrier de SCI',
+    description:
+      'Suivez les avis d’imposition, appels de fonds, courriers de locataires et assurances.',
+  },
 ] as const;
 const STEPS = [
   [
@@ -182,7 +200,8 @@ export const metadata: Metadata = {
   alternates: { canonical: '/' },
   openGraph: {
     title: 'Logiciel de gestion du courrier par IA | BRAINMAIL',
-    description: 'Scannez et centralisez vos courriers, retrouvez vos échéances et validez les réponses préparées par IA.',
+    description:
+      'Scannez et centralisez vos courriers, retrouvez vos échéances et validez les réponses préparées par IA.',
     url: 'https://www.brainmail.ai/',
   },
 };
@@ -207,6 +226,7 @@ export default async function Home() {
           <a href="#confiance">Confiance</a>
           <a href="#solutions">Solutions</a>
           <a href="#tarifs">Tarifs</a>
+          <Link href="/comment-ca-marche">Comment ça marche</Link>
         </nav>
         <div className="lp-nav-cta">
           <Link href={`${app}/login`} className="lp-login">
@@ -384,15 +404,18 @@ export default async function Home() {
           <p className="overline">Solutions par métier</p>
           <h2>Un logiciel de gestion du courrier adapté à votre activité.</h2>
           <p className="lp-section-lede">
-            Entrepreneurs, SCI, dirigeants de plusieurs sociétés ou cabinets comptables :
-            découvrez comment BRAINMAIL organise les documents et les échéances de chacun.
+            Entrepreneurs, SCI, dirigeants de plusieurs sociétés ou cabinets comptables : découvrez
+            comment BRAINMAIL organise les documents et les échéances de chacun.
           </p>
         </header>
         <div className="lp-features">
           {SOLUTIONS.map((solution) => (
             <article key={solution.slug}>
               <h3>
-                <Link href={`/solutions/${solution.slug}`} style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 4 }}>
+                <Link
+                  href={`/solutions/${solution.slug}`}
+                  style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 4 }}
+                >
                   {solution.title}
                 </Link>
               </h3>
@@ -401,7 +424,9 @@ export default async function Home() {
           ))}
         </div>
         <p style={{ marginTop: 24 }}>
-          <Link href="/solutions">Voir toutes nos solutions par métier <ArrowRight size={16} aria-hidden="true" /></Link>
+          <Link href="/solutions">
+            Voir toutes nos solutions par métier <ArrowRight size={16} aria-hidden="true" />
+          </Link>
         </p>
       </section>
 
@@ -498,8 +523,13 @@ export default async function Home() {
                 '@type': 'Organization',
                 '@id': 'https://www.brainmail.ai/#organization',
                 name: 'WeMade SASU',
+                alternateName: 'BRAINMAIL.ai',
                 url: 'https://www.brainmail.ai',
+                logo: 'https://www.brainmail.ai/icon.png',
                 email: 'gregory@brainmail.ai',
+                foundingDate: '2026',
+                areaServed: 'FR',
+                knowsLanguage: 'fr',
                 address: {
                   '@type': 'PostalAddress',
                   addressLocality: 'Marseille',
@@ -508,9 +538,11 @@ export default async function Home() {
               },
               {
                 '@type': 'WebSite',
+                '@id': 'https://www.brainmail.ai/#website',
                 name: 'BRAINMAIL.ai',
                 url: 'https://www.brainmail.ai',
                 inLanguage: 'fr-FR',
+                publisher: { '@id': 'https://www.brainmail.ai/#organization' },
               },
               {
                 '@type': 'SoftwareApplication',
@@ -520,6 +552,18 @@ export default async function Home() {
                 applicationCategory: 'BusinessApplication',
                 operatingSystem: 'Web',
                 url: 'https://www.brainmail.ai',
+                image: 'https://www.brainmail.ai/opengraph-image',
+                inLanguage: 'fr',
+                countryOfOrigin: 'FR',
+                featureList: [
+                  'Scan du courrier papier par QR code depuis un téléphone, sans application',
+                  'Import de PDF et adresse email de réception par société',
+                  'Lecture et analyse par Mistral, en appel direct à son API européenne',
+                  'Échéances prouvées par une citation du document',
+                  'Rappels par email après confirmation humaine',
+                  'Brouillons de réponse à valider, jamais envoyés automatiquement',
+                  'Un espace isolé par société, chiffrement AES-256-GCM',
+                ],
                 description:
                   'BRAINMAIL centralise le courrier papier et les emails de vos sociétés, extrait les échéances avec leur citation dans le document, et prépare les réponses à valider.',
                 offers: [
@@ -575,6 +619,7 @@ export default async function Home() {
           <a href="#confiance">Confiance</a>
           <a href="#tarifs">Tarifs</a>
           <Link href="/solutions">Solutions</Link>
+          <Link href="/comment-ca-marche">Comment ça marche</Link>
           <Link href="/legal/mentions-legales">Mentions légales</Link>
           <Link href="/legal/cgv">CGV</Link>
           <Link href="/legal/confidentialite">Confidentialité</Link>

@@ -2815,3 +2815,167 @@ p.error {
   font-size: 16px;
   color: var(--text);
 }
+
+/* Pages éditoriales : solutions, comment ça marche ─────────────────────── */
+.article-page {
+  width: min(760px, 100% - 40px);
+  margin: 0 auto;
+  padding: 22px 0 72px;
+  color: var(--text);
+}
+.article-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 22px 0 30px;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+.crumbs a {
+  color: var(--green);
+}
+.crumbs a:hover {
+  text-decoration: underline;
+}
+.crumbs [aria-current] {
+  color: var(--ink);
+  font-weight: 600;
+}
+.article-page h1 {
+  margin: 12px 0 10px;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 450;
+  letter-spacing: -0.02em;
+}
+.article-meta {
+  margin-bottom: 26px;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+.article-summary {
+  margin: 0 0 30px;
+  padding: 18px 22px;
+  border-left: 4px solid var(--green);
+  border-radius: 0 var(--r) var(--r) 0;
+  background: var(--green-tint);
+}
+.article-summary strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--green-ink);
+}
+.article-summary p {
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.article-page .lead {
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+.article-page article > section,
+.article-page article > ol {
+  margin-top: 38px;
+}
+.article-page h2 {
+  margin-bottom: 12px;
+  font-size: var(--fs-xl);
+}
+.article-page p {
+  margin-bottom: 14px;
+  line-height: 1.65;
+}
+.article-points {
+  display: grid;
+  gap: 9px;
+  margin: 6px 0 16px;
+}
+.article-points li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.article-points svg {
+  flex: none;
+  margin-top: 4px;
+  color: var(--green);
+}
+.article-cta {
+  padding: 26px 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--sheet);
+  box-shadow: var(--shadow-1);
+}
+.article-cta h2 {
+  font-size: var(--fs-lg);
+}
+.article-cta p {
+  margin-bottom: 18px;
+}
+.article-related {
+  display: grid;
+  gap: 10px;
+}
+.article-related a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--green);
+  font-weight: 600;
+}
+.article-related a:hover {
+  text-decoration: underline;
+}
+.howto-steps {
+  display: grid;
+  gap: 22px;
+  counter-reset: none;
+}
+.howto-steps li {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 18px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.howto-steps h2 {
+  margin-bottom: 8px;
+  font-size: var(--fs-lg);
+}
+.howto-n {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 2.6rem;
+  line-height: 1;
+  color: var(--green);
+}
+@media (max-width: 640px) {
+  .article-nav .button {
+    display: none;
+  }
+  .howto-steps li {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .howto-n {
+    font-size: 2rem;
+  }
+  .article-cta {
+    padding: 20px 18px;
+  }
+}

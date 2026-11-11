@@ -1,4 +1,5 @@
 Hanken Grotesk — fonte variable (sous-ensemble latin), distribuée sous SIL Open Font License 1.1.
+Fichiers : hanken-grotesk.woff2 (variable, pour le site) ; hanken-grotesk-og.ttf (instance fixe, pour les images de partage).
 
 Copyright 2021 The Hanken Grotesk Project Authors (https://github.com/marcologous/hanken-grotesk) HankenGrotesk-Italic[wght].ttf: Copyright 2021 The Hanken Grotesk Project Authors (https://github.com/marcologous/hanken-grotesk)
 

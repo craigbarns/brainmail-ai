@@ -36,7 +36,7 @@ export const metadata: Metadata = {
       'Centralisez les courriers papier et emails de vos sociétés, identifiez les échéances et validez les réponses proposées par IA.',
     url: 'https://www.brainmail.ai',
   },
-  twitter: { card: 'summary', title: 'BRAINMAIL — Gestion du courrier par IA' },
+  twitter: { card: 'summary_large_image', title: 'BRAINMAIL — Gestion du courrier par IA' },
   // Indexable by default; the private areas are handled per route and in
   // robots.ts (/app, /api, /scan, /login stay out of search engines).
   robots: { index: true, follow: true },

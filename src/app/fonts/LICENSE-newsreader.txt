@@ -1,4 +1,5 @@
 Newsreader — fonte variable (sous-ensemble latin), distribuée sous SIL Open Font License 1.1.
+Fichiers : newsreader-roman.woff2, newsreader-italic.woff2 (variables, pour le site) ; newsreader-og.ttf, newsreader-og-italic.ttf (instances fixes, pour les images de partage).
 
 Copyright 2020 The Newsreader Project Authors (http://github.com/productiontype/Newsreader) Newsreader-Italic[opsz,wght].ttf: Copyright 2020 The Newsreader Project Authors (http://github.com/productiontype/Newsreader)
 

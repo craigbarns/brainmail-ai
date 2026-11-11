@@ -2,7 +2,11 @@
 > BRAINMAIL est un logiciel de gestion du courrier par IA destiné aux entreprises, SCI et cabinets comptables.
 
 Site officiel : https://www.brainmail.ai/
+Comment ça marche, étape par étape : https://www.brainmail.ai/comment-ca-marche
 Présentation des solutions : https://www.brainmail.ai/solutions
+Version complète pour les assistants IA : https://www.brainmail.ai/llms-full.txt
+
+Réponse courte : BRAINMAIL lit les courriers papier et les emails d'une entreprise, prouve chaque échéance par une phrase du document, rappelle par email et prépare des réponses qu'un humain valide. Édité par WeMade SASU à Marseille, analyse par Mistral (France), à partir de 29 € HT par mois.
 
 ## Fonctionnalités
 - Numérisation du courrier papier depuis un téléphone grâce à un QR code temporaire, sans application mobile.
@@ -28,6 +32,7 @@ Présentation des solutions : https://www.brainmail.ai/solutions
 BRAINMAIL ne paie pas les factures, n'envoie pas de réponses automatiquement et ne remplace pas un expert juridique ou comptable. L'utilisateur confirme les échéances et valide les actions.
 
 ## Informations
+- Dernière mise à jour de cette page : 11 novembre 2026.
 - Société éditrice : WeMade SASU, Marseille, France.
 - Conditions générales : https://www.brainmail.ai/legal/cgv
 - Confidentialité : https://www.brainmail.ai/legal/confidentialite
