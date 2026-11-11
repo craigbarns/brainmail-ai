@@ -43,7 +43,24 @@ test('ordinateur et téléphone : capture, synchronisation et absence de faux r�
   await expect(phone.getByRole('heading', { name: 'C’est dans la boîte.' })).toBeVisible();
   await page.getByRole('button', { name: 'Voir le courrier', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Détails du courrier' })).toBeVisible();
+  // On narrow mobile screens the complete document drawer must be scrollable.
+  // A long letter must not disappear underneath fixed footer actions.
+  await page.setViewportSize({ width: 390, height: 844 });
+  const drawer = page.locator('.document-drawer');
+  await expect(drawer).toHaveCSS('overflow-y', 'auto');
+  await page.locator('.doc-analysis').evaluate((el) => {
+    const longAnalysis = document.createElement('p');
+    longAnalysis.textContent = 'Long courrier à consulter et à classer. '.repeat(100);
+    el.appendChild(longAnalysis);
+  });
+  const scrollable = await drawer.evaluate((el) => el.scrollHeight > el.clientHeight);
+  expect(scrollable).toBeTruthy();
+  const footer = page.locator('.drawer-actions');
+  await expect(footer).not.toBeInViewport();
+  await drawer.evaluate((el) => { el.scrollTop = el.scrollHeight; });
+  await expect(footer).toBeInViewport();
   await page.getByRole('button', { name: 'Fermer le courrier' }).click();
+  await page.setViewportSize({ width: 1280, height: 800 });
   await expect(page.getByText('À relancer', { exact: true })).toBeVisible({ timeout: 15000 });
   await page.getByRole('button', { name: /Nouveau courrier/ }).click();
   await expect(page.getByText('Mistral OCR non configuré.', { exact: true })).toBeVisible();

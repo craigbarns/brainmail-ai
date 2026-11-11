@@ -2516,10 +2516,29 @@ p.error {
   }
 }
 @media (max-width: 960px) {
+  /* A single scroll surface for the entire mobile letter: avoid a fixed
+     multi-row footer obscuring the analysis and the scanned pages. */
+  .document-drawer {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .doc-head,
+  .drawer-actions {
+    flex-shrink: 0;
+  }
+  .doc-head > div {
+    min-width: 0;
+  }
+  .doc-head > .icon-button {
+    flex-shrink: 0;
+  }
   .doc-body {
     display: flex;
+    flex: none;
     flex-direction: column;
-    overflow-y: auto;
+    min-height: auto;
+    overflow: visible;
   }
   .doc-analysis {
     order: 1;
@@ -2527,13 +2546,16 @@ p.error {
   .doc-source {
     order: 2;
     border-top: 1px solid var(--line);
+    border-right: 0;
   }
   .doc-source,
   .doc-analysis {
+    min-height: auto;
     overflow: visible;
   }
-  .doc-source {
-    border-right: 0;
+  .drawer-actions {
+    position: static;
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
   }
   .page-image {
     max-height: 60vh;
