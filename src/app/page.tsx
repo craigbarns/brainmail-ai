@@ -139,7 +139,7 @@ const PLANS = [
     price: '149',
     who: 'Experts-comptables, gestionnaires, syndics.',
     items: [
-      '10 sociétés, +15 € chacune',
+      '10 sociétés maximum',
       '1 000 courriers par mois',
       'Support prioritaire',
       'Onboarding accompagné',
@@ -259,7 +259,7 @@ export default async function Home() {
           </div>
           <ul className="lp-assurances">
             <li>
-              <Check size={15} /> Sans carte bancaire
+              <Check size={15} /> 20 courriers à essayer, sans carte bancaire
             </li>
             <li>
               <Check size={15} /> Données chiffrées, IA européenne
@@ -482,7 +482,7 @@ export default async function Home() {
         </div>
         <p className="pricing-note">
           Prix HT ; TVA française 20 % ajoutée au paiement, autoliquidée pour les entreprises de
-          l&apos;UE avec un numéro de TVA valide. Annuel : 2 mois offerts. Pilote fondateur : 3 mois
+          l&apos;UE avec un numéro de TVA valide. Pilote fondateur : 3 mois
           offerts contre votre retour d’expérience — parlez-en à votre contact BRAINMAIL.
         </p>
       </section>

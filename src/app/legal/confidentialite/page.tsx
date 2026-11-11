@@ -3,7 +3,7 @@ import { LegalShell } from '@/components/legal';
 export const metadata = { title: 'Politique de confidentialité — BRAINMAIL.ai' };
 export default function Page() {
   return (
-    <LegalShell title="Politique de confidentialité (RGPD)" updated="10 novembre 2026">
+    <LegalShell title="Politique de confidentialité (RGPD)" updated="11 novembre 2026">
       <h2>1. Qui traite vos données</h2>
       <p>
         WeMade SASU (Marseille, SIREN 832 419 428) est responsable du traitement des données du
@@ -15,9 +15,13 @@ export default function Page() {
         Nous traitons : les documents que vous confiez (photos de courriers, PDF, emails),
         leur transcription et leur analyse (résumés, catégories, échéances, brouillons),
         l&apos;essentiel des données du compte (email, sociétés, préférences) et les
-        métadonnées techniques nécessaires à la sécurité (journalisation des accès). Ces
-        traitements reposent sur l&apos;exécution du contrat ; la journalisation repose sur
-        notre intérêt légitime à protéger le service.
+        métadonnées techniques nécessaires à la sécurité (journalisation des accès). Nous
+        enregistrons également, pour chaque compte, les dates de quatre étapes : inscription,
+        premier courrier numérisé, troisième courrier analysé et premier abonnement activé.
+        Ces événements ne contiennent ni texte, ni expéditeur, ni titre de document. Ils servent
+        à mesurer l&apos;adoption du service, sur la base de notre intérêt légitime. Ils sont
+        supprimés avec le compte. Les autres traitements reposent sur l&apos;exécution du
+        contrat ; les journaux de sécurité reposent sur notre intérêt légitime.
       </p>
       <h2>3. Où vos données se trouvent</h2>
       <p>
@@ -66,8 +70,9 @@ export default function Page() {
       <h2>9. Cookies</h2>
       <p>
         Le service n&apos;utilise qu&apos;un cookie de session strictement nécessaire à la
-        connexion, exempté de consentement. Aucun traceur publicitaire, aucune mesure
-        d&apos;audience tierce.
+        connexion, exempté de consentement. Aucun traceur publicitaire ni service
+        d&apos;audience tiers. Les événements de progression sont enregistrés côté serveur,
+        sans cookie d&apos;analyse.
       </p>
     </LegalShell>
   );

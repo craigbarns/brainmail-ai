@@ -3,7 +3,7 @@ import { LegalShell } from '@/components/legal';
 export const metadata = { title: 'Conditions générales de vente — BRAINMAIL.ai' };
 export default function Page() {
   return (
-    <LegalShell title="Conditions générales de vente" updated="10 novembre 2026">
+    <LegalShell title="Conditions générales de vente" updated="11 novembre 2026">
       <h2>1. Objet</h2>
       <p>
         Les présentes conditions régissent la fourniture du service BRAINMAIL.ai : réception,
@@ -15,8 +15,7 @@ export default function Page() {
       <h2>2. Prix</h2>
       <p>
         Les abonnements sont proposés en euros, hors taxes : Solo 29 €/mois, Pro 59 €/mois,
-        Cabinet 149 €/mois (10 sociétés incluses, 15 € par société supplémentaire au-delà de
-        dix). La TVA française (20 %) est ajoutée au paiement ; pour les entreprises assujetties
+        Cabinet 149 €/mois (10 sociétés maximum). La TVA française (20 %) est ajoutée au paiement ; pour les entreprises assujetties
         d&apos;un autre État de l&apos;Union européenne disposant d&apos;un numéro de TVA
         intracommunautaire valide, la TVA est autoliquidée conformément à la réglementation
         applicable.

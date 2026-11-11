@@ -154,7 +154,7 @@ export const SEO_PAGES: SeoPage[] = [
       },
       {
         q: 'Combien coûte le suivi du courrier de trois sociétés ?',
-        a: 'Le palier Pro coûte 59 € HT par mois pour 3 sociétés et 200 courriers par mois. Au-delà, le palier Cabinet couvre 10 sociétés pour 149 € HT par mois, puis 15 € HT par société supplémentaire.',
+        a: 'Le palier Pro coûte 59 € HT par mois pour 3 sociétés et 200 courriers par mois. Au-delà de 3 sociétés, le palier Cabinet couvre jusqu’à 10 sociétés pour 149 € HT par mois.',
       },
     ],
     related: [
@@ -166,33 +166,33 @@ export const SEO_PAGES: SeoPage[] = [
     slug: 'courrier-expert-comptable',
     crumb: 'Experts-comptables',
     summary:
-      'BRAINMAIL permet à un cabinet comptable de suivre le courrier de ses clients : chaque client a son espace, chaque échéance est citée dans le document, et le cabinet voit ce qui arrive avant la date. Palier Cabinet : 149 € HT par mois pour 10 sociétés, puis 15 € par société.',
+      'BRAINMAIL permet à un cabinet comptable de regrouper jusqu’à dix espaces de sociétés dans son propre compte et de suivre leurs courriers et échéances, sans accès client distinct à ce stade. Palier Cabinet : 149 € HT par mois pour 10 sociétés maximum.',
     title: 'Le suivi du courrier pour les cabinets et experts-comptables',
     description:
-      'Offrez à vos clients un espace où ne rien oublier : BRAINMAIL centralise leurs courriers, source les échéances et vous garde la vue. 149 € HT/mois pour 10 sociétés.',
+      'Centralisez les courriers des sociétés que vous gérez : BRAINMAIL extrait les échéances sourcées, dans des espaces distincts accessibles à votre compte. 149 € HT/mois pour 10 sociétés.',
     h1: 'Suivi du courrier et des échéances clients pour experts-comptables',
     eyebrow: 'EXPERTS-COMPTABLES · GESTIONNAIRES · SYNDICS',
     intro: [
       'Un cabinet gère des dizaines de sociétés clientes, et le courrier reste le point aveugle : l’avis URSSAF qui traîne chez le client, l’assurance relue trop tard, la date de télédéclaration découverte après la date limite.',
-      'BRAINMAIL fait de votre cabinet la centrale administrative de vos clients : chaque société dispose d’un espace où son courrier papier et ses emails sont scannés, lus, classés, et où chaque échéance est sourcée et rappelée.',
+      'BRAINMAIL peut centraliser le courrier des sociétés dont vous gérez directement les espaces. Chaque espace garde ses documents et échéances séparés, dans la limite du palier souscrit.',
     ],
     sections: [
       {
         h2: 'Le courrier, l’angle mort de la mission',
         paras: [
           'Vous produisez les comptes et les déclarations, mais une part du risque naît avant vous : dans le courrier que le client reçoit et oublie. Chaque majoration, chaque perte de droit, chaque pénalité de retard est d’abord un courrier mal traité chez le client.',
-          'En leur offrant un espace où ne rien oublier, vous réduisez ces incidents — et vous gardez une vue sur les échéances de l’ensemble de votre portefeuille, sans demander de justificatif par email.',
+          'En traitant les documents que vous recevez ou numérisez, vous suivez les échéances des sociétés rattachées à votre compte, sans prétendre donner un accès autonome aux clients.',
         ],
       },
       {
         h2: 'Le palier Cabinet, pensé pour votre portefeuille',
         paras: [
-          '10 sociétés incluses pour 149 € HT par mois, puis 15 € HT par société supplémentaire : le coût marginal d’un client supplémentaire est maîtrisé. 1 000 courriers par mois, support prioritaire, onboarding accompagné.',
-          'L’IA prépare les brouillons de réponse — courriers de relance, demandes d’attestation, réponses aux administrations — et rien ne part sans validation : la vôtre ou celle du client. Le cabinet garde le contrôle professionnel du contenu.',
+          'Jusqu’à 10 sociétés pour 149 € HT par mois, dans une limite de 1 000 courriers par mois. 1 000 courriers par mois, support prioritaire, onboarding accompagné.',
+          'L’IA prépare les brouillons de réponse — courriers de relance, demandes d’attestation, réponses aux administrations — et rien ne part sans validation : la vôtre ou celle du client. L’utilisateur du compte garde le contrôle du contenu.',
         ],
         points: [
-          '10 sociétés incluses, +15 € HT par société au-delà',
-          'Échéances citées : le client voit la preuve, vous voyez la confirmation',
+          'Jusqu’à 10 sociétés avec le palier Cabinet',
+          'Échéances sourcées : la preuve et la confirmation restent dans chaque espace',
           'Brouillons préparés par l’IA, validés avant tout envoi',
           'Historique consultable par document et par dossier suivi',
           'IA et données en Europe : Mistral (France), stockage chiffré AES-256-GCM',
@@ -201,7 +201,7 @@ export const SEO_PAGES: SeoPage[] = [
       {
         h2: 'Une intégration en une réunion',
         paras: [
-          'Vous créez les espaces de vos clients, ils scannent leurs courriers depuis leur téléphone ou basculent leurs expéditeurs email sur l’adresse dédiée. Aucune installation, aucune formation : la page de scan est une page web.',
+          'Vous créez les espaces des sociétés gérées et importez leurs courriers par scan, PDF ou adresse de réception dédiée. Aucune installation, aucune formation : la page de scan est une page web.',
           'Programme pilote fondateur : trois mois offerts pour les premiers cabinets qui nous font leur retour d’expérience. Demandez-le à votre contact BRAINMAIL.',
         ],
       },
@@ -209,7 +209,7 @@ export const SEO_PAGES: SeoPage[] = [
     faqs: [
       {
         q: 'Comment un cabinet peut-il suivre le courrier de ses clients ?',
-        a: 'Avec BRAINMAIL, chaque société cliente dispose d’un espace où son courrier est scanné et analysé : échéances extraites avec citation, réponses préparées en brouillon, rappels automatiques. Le cabinet garde une vue sur l’ensemble sans collecter les justificatifs à la main.',
+        a: 'Avec BRAINMAIL, le cabinet peut gérer jusqu’à dix espaces de sociétés sous son propre compte : courriers numérisés, échéances avec citation, brouillons à relire et rappels. L’accès indépendant des clients n’est pas encore disponible.',
       },
       {
         q: 'L’IA peut-elle envoyer du courrier à la place du client ?',
@@ -221,7 +221,7 @@ export const SEO_PAGES: SeoPage[] = [
       },
       {
         q: 'Combien coûte le palier Cabinet ?',
-        a: '149 € HT par mois pour 10 sociétés et 1 000 courriers par mois, puis 15 € HT par société supplémentaire. Support prioritaire et onboarding accompagné inclus. Sans engagement, résiliation en un clic.',
+        a: '149 € HT par mois pour 10 sociétés maximum et 1 000 courriers par mois. Support prioritaire et onboarding accompagné inclus. Sans engagement, résiliation en un clic.',
       },
       {
         q: 'Peut-on tester le service avant de l’offrir à ses clients ?',

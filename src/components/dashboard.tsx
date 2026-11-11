@@ -100,19 +100,6 @@ export function Dashboard() {
     setDocs(d);
     setActions(a);
     if (ds) setDossiers(ds);
-    // No active subscription: show the plans once, on the first visit. The trial
-    // stays usable afterwards, as the landing page promises (no card required).
-    if (m && m.billing && !m.billing.active) {
-      const seen = `brainmail:plans-seen:${m.user.userId}`;
-      try {
-        if (!localStorage.getItem(seen)) {
-          localStorage.setItem(seen, '1');
-          location.href = '/app/abonnement';
-        }
-      } catch {
-        // Storage unavailable (private mode): never trap the user on the plan page.
-      }
-    }
   }, [view, search]);
   // While a mail is being analysed, poll quickly so its result shows up at once.
   const waiting = docs.some((d) => ['queued', 'processing'].includes(d.status));
@@ -522,6 +509,18 @@ export function Dashboard() {
                             ? 'Prenez un courrier en photo avec ce téléphone, ou importez un PDF.'
                             : 'Scannez un courrier avec votre téléphone, ou importez un PDF.'}
                     </p>
+                    {view === 'inbox' && !search && (
+                      <>
+                        <p className="muted">20 courriers à essayer, sans carte bancaire.</p>
+                        <button
+                          className="button"
+                          disabled={busy}
+                          onClick={() => void task(async () => setScan(await post('scans')))}
+                        >
+                          <ScanLine size={17} /> Scanner mon premier courrier
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </section>

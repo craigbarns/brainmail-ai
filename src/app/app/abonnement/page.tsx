@@ -32,7 +32,7 @@ const OFFERS = [
     name: 'Cabinet',
     price: '149',
     items: [
-      '10 sociétés, +15 € chacune',
+      '10 sociétés maximum',
       '1 000 courriers par mois',
       'Support prioritaire',
       'Onboarding accompagné',
