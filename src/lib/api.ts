@@ -237,7 +237,9 @@ async function route(request: Request): Promise<Response> {
   const user = await authenticate(request),
     ws = user.workspaceId;
   if (parts.join('/') === 'metrics/funnel' && method === 'GET') {
-    const adminEmail = (process.env.METRICS_ADMIN_EMAIL || '').trim().toLowerCase();
+    const adminEmail = (process.env.METRICS_ADMIN_EMAIL || process.env.OWNER_NOTIFY_EMAIL || '')
+      .trim()
+      .toLowerCase();
     if (!adminEmail || !user.verified || user.email.toLowerCase() !== adminEmail)
       throw new HttpError(403, 'Accès non autorisé.');
     const rows = await query<{ milestone: string; total: number }>(
