@@ -11,10 +11,9 @@ test('ordinateur et téléphone : capture, synchronisation et absence de faux r�
   await page.getByLabel('Adresse email').fill('browser@example.test');
   await page.getByLabel(/Mot de passe/).fill('test-password-long-123!');
   await page.getByRole('button', { name: 'Créer mon espace', exact: true }).click();
-  // A new account sees the plans once, then the trial opens the mailbox.
-  await page.waitForURL('**/app/abonnement');
-  await page.getByRole('link', { name: 'Continuer avec l’essai' }).click();
+  // First onboarding screen is the inbox and its first scan CTA, not pricing.
   await page.waitForURL('**/app');
+  await expect(page.getByRole('button', { name: 'Scanner mon premier courrier' })).toBeVisible();
   await expect(page.getByLabel('Espace actif')).toHaveValue(/.+/);
   await page.getByRole('button', { name: 'Scanner un courrier', exact: true }).click();
   const link = await page
@@ -74,9 +73,8 @@ test('téléphone seul : photo directe, sans QR code, puis retour à ses courrie
   await phone.getByLabel('Adresse email').fill('mobile@example.test');
   await phone.getByLabel(/Mot de passe/).fill('test-password-long-123!');
   await phone.getByRole('button', { name: 'Créer mon espace', exact: true }).click();
-  await phone.waitForURL('**/app/abonnement');
-  await phone.getByRole('link', { name: 'Continuer avec l’essai' }).click();
   await phone.waitForURL('**/app');
+  await expect(phone.getByRole('button', { name: 'Scanner mon premier courrier' })).toBeVisible();
   await phone.getByRole('button', { name: 'Scanner un courrier', exact: true }).click();
   // The QR code stays folded away: the phone in hand is the scanner.
   await expect(phone.getByAltText('QR code temporaire pour scanner le courrier')).toBeHidden();
