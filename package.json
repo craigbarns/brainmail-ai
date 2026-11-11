@@ -8,6 +8,8 @@
     "start": "next start --hostname 0.0.0.0",
     "worker": "node --import tsx scripts/worker.ts",
     "db:migrate": "node --import tsx scripts/migrate.ts",
+    "db:backup": "node --import tsx scripts/backup.ts",
+    "db:restore": "node --import tsx scripts/restore.ts",
     "test": "node --import tsx --test tests/*.test.ts",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm test && npm run build",

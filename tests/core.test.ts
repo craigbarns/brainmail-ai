@@ -794,3 +794,56 @@ test('signature Stripe : message ancien refusé, rotation de secret acceptée', 
   );
   assert.equal(verifyStripeSignature(secret, payload, `t=abc,v1=${sign(now)}`), false);
 });
+test('sauvegarde : export chiffré, restauration complète, jamais d’écrasement', async () => {
+  const { exportDatabase, restoreDatabase, backupOnce, backupMaybe, backupName } =
+    await import('../src/lib/backup');
+  const { listBackups, getBackup } = await import('../src/lib/storage');
+  const kept = [
+    'users',
+    'workspaces',
+    'memberships',
+    'documents',
+    'document_files',
+    'actions',
+    'jobs',
+  ];
+  const count = async () =>
+    Object.fromEntries(
+      await Promise.all(
+        kept.map(async (t) => [t, (await query(`SELECT count(*)::int AS n FROM ${t}`))[0].n]),
+      ),
+    );
+  const before = await count();
+  assert.ok(before.users > 0 && before.documents > 0 && before.jobs > 0);
+  const [doc] = await query(
+    "SELECT id,title,created_at FROM documents WHERE title<>'Nouveau courrier' LIMIT 1",
+  );
+  const [job] = await query('SELECT id,payload FROM jobs LIMIT 1');
+  // Sauvegarde quotidienne : une par jour, rangée dans le stockage.
+  const name = await backupOnce();
+  assert.equal(name, backupName());
+  assert.ok((await listBackups()).includes(name));
+  assert.equal(await backupMaybe(), null);
+  const bytes = await getBackup(name);
+  // Chiffrée : aucune adresse email lisible, et toute altération est détectée.
+  assert.equal(bytes.includes(Buffer.from('alpha@example.test')), false);
+  const tampered = Buffer.from(bytes);
+  tampered[tampered.length - 1] ^= 1;
+  await assert.rejects(restoreDatabase(tampered));
+  // Une base qui contient des comptes n'est jamais écrasée.
+  await assert.rejects(restoreDatabase(bytes), /Base non vide/);
+  await query('TRUNCATE users, workspaces CASCADE');
+  assert.equal((await count()).documents, 0);
+  const restored = await restoreDatabase(await exportDatabaseFrom(bytes));
+  assert.deepEqual(await count(), before);
+  assert.equal(restored.counts.users, before.users);
+  const [after] = await query('SELECT title,created_at FROM documents WHERE id=$1', [doc.id]);
+  assert.equal(after.title, doc.title);
+  assert.equal(new Date(after.created_at).getTime(), new Date(doc.created_at).getTime());
+  const [jobAfter] = await query('SELECT payload FROM jobs WHERE id=$1', [job.id]);
+  assert.deepEqual(jobAfter.payload, job.payload);
+  // Les sessions ne sont pas sauvegardées : tout le monde se reconnecte après une restauration.
+  assert.equal((await query('SELECT count(*)::int AS n FROM sessions'))[0].n, 0);
+  void exportDatabase;
+});
+const exportDatabaseFrom = async (bytes: Buffer) => bytes;
