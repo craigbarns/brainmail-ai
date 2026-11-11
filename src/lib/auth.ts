@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { query, transaction } from './db';
 import { cookiesOf, hash, HttpError, secret, passwordHash, verifyPassword } from './security';
 import { Resend } from 'resend';
+import { recordMilestone } from './conversion';
 export type Identity = {
   userId: string;
   workspaceId: string;
@@ -55,6 +56,7 @@ export async function register(email: string, password: string, name: string) {
     ]);
     await db.query('INSERT INTO workspaces(id,name) VALUES($1,$2)', [workspace, name]);
     await db.query('INSERT INTO memberships(user_id,workspace_id) VALUES($1,$2)', [id, workspace]);
+    await recordMilestone(db, id, 'registered');
     await db.query(
       "INSERT INTO verification_tokens(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '24 hours')",
       [hash(token), id],

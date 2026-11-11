@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { query, transaction, type DB, type Row } from './db';
 import { hash, secret, HttpError } from './security';
 import { putFile, deleteFile, validateFile } from './storage';
+import { recordMilestone } from './conversion';
 export async function enqueue(
   db: DB,
   workspaceId: string,
@@ -28,7 +29,7 @@ export async function createDocument(
   ]);
   return id;
 }
-export async function createScan(workspaceId: string) {
+export async function createScan(workspaceId: string, initiatedByUserId?: string) {
   return transaction(async (db) => {
     const id = randomUUID(),
       documentId = randomUUID(),
@@ -38,8 +39,8 @@ export async function createScan(workspaceId: string) {
       workspaceId,
     ]);
     const { rows } = await db.query(
-      "INSERT INTO scans(id,workspace_id,document_id,token_hash,expires_at) VALUES($1,$2,$3,$4,now()+interval '15 minutes') RETURNING expires_at",
-      [id, workspaceId, documentId, hash(token)],
+      "INSERT INTO scans(id,workspace_id,document_id,token_hash,expires_at,initiated_by_user_id) VALUES($1,$2,$3,$4,now()+interval '15 minutes',$5) RETURNING expires_at",
+      [id, workspaceId, documentId, hash(token), initiatedByUserId ?? null],
     );
     return { id, documentId, token, expiresAt: rows[0].expires_at };
   });
@@ -125,14 +126,16 @@ export async function finalizeDocument(workspaceId: string, documentId: string, 
     ]);
     if (!doc) throw new HttpError(404, 'Courrier introuvable.');
     if (doc.status !== 'capturing') return;
+    let initiatorId: string | null = null;
     if (scanId) {
       const {
         rows: [scan],
       } = await db.query(
-        'SELECT id FROM scans WHERE id=$1 AND workspace_id=$2 AND expires_at>now() AND completed_at IS NULL FOR UPDATE',
+        'SELECT id,initiated_by_user_id FROM scans WHERE id=$1 AND workspace_id=$2 AND expires_at>now() AND completed_at IS NULL FOR UPDATE',
         [scanId, workspaceId],
       );
       if (!scan) throw new HttpError(410, 'Session expirée.');
+      initiatorId = scan.initiated_by_user_id ?? null;
     }
     if (
       !(
@@ -151,6 +154,7 @@ export async function finalizeDocument(workspaceId: string, documentId: string, 
       documentId,
       workspaceId,
     ]);
+    if (initiatorId) await recordMilestone(db, initiatorId, 'first_scan');
     await enqueue(db, workspaceId, 'analyze', { documentId }, `analyze:${documentId}`);
   });
 }

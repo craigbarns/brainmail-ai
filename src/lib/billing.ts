@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { query, transaction } from './db';
 import { HttpError } from './security';
+import { recordMilestone } from './conversion';
 
 // Facturation Stripe : l'abonnement appartient à l'utilisateur. Un palier borne
 // le nombre de sociétés (workspaces) et de courriers analysés par mois.
@@ -223,6 +224,8 @@ export async function applySubscription(sub: Record<string, unknown>) {
        current_period_end=EXCLUDED.current_period_end,updated_at=now()`,
       [userId, plan ?? 'none', s.customer, s.id, s.status, period],
     );
+    // "active" peut inclure un code promotionnel : activation, pas revenu confirmé.
+    if (s.status === 'active') await recordMilestone(db, userId, 'subscription_activated');
   });
 }
 

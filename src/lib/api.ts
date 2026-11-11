@@ -236,6 +236,19 @@ async function route(request: Request): Promise<Response> {
   }
   const user = await authenticate(request),
     ws = user.workspaceId;
+  if (parts.join('/') === 'metrics/funnel' && method === 'GET') {
+    const adminEmail = (process.env.METRICS_ADMIN_EMAIL || '').trim().toLowerCase();
+    if (!adminEmail || !user.verified || user.email.toLowerCase() !== adminEmail)
+      throw new HttpError(403, 'Accès non autorisé.');
+    const rows = await query<{ milestone: string; total: number }>(
+      'SELECT milestone,count(*)::int AS total FROM conversion_milestones GROUP BY milestone',
+    );
+    const totals: Record<string, number> = {
+      registered: 0, first_scan: 0, third_document: 0, subscription_activated: 0,
+    };
+    for (const row of rows) totals[row.milestone] = row.total;
+    return json({ totals, description: 'Étapes uniques par compte, sans contenu documentaire.' });
+  }
   if (parts[0] === 'me' && method === 'GET') {
     const workspaces = await query(
       'SELECT w.id,w.name FROM workspaces w JOIN memberships m ON m.workspace_id=w.id WHERE m.user_id=$1 ORDER BY w.name',
@@ -363,7 +376,7 @@ async function route(request: Request): Promise<Response> {
     if (method === 'POST' && !parts[1]) {
       await rateLimit(`scan:${ws}`, 30, 3600);
       await gateMonthlyDocs(ws, user.userId);
-      const scan = await createScan(ws);
+      const scan = await createScan(ws, user.userId);
       const link = `${process.env.APP_URL || 'http://localhost:3000'}/scan#${scan.token}`;
       return json(
         {

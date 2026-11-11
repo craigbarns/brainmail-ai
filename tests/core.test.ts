@@ -12,7 +12,7 @@ process.env.STORAGE_DRIVER = 'local';
 process.env.STORAGE_ENCRYPTION_KEY = randomBytes(32).toString('base64');
 process.env.APP_URL = 'http://localhost:3000';
 delete process.env.DATABASE_URL;
-import { migrate, query, database } from '../src/lib/db';
+import { migrate, query, transaction, database } from '../src/lib/db';
 import { handle } from '../src/lib/api';
 import {
   createScan,
@@ -603,6 +603,50 @@ test('signature Stripe : rejet sans en-tête valide, accept du HMAC correct', ()
   assert.equal(verifyStripeSignature(secret, payload, `t=${t},v1=${'0'.repeat(64)}`), false);
   assert.equal(verifyStripeSignature(secret, payload, null), false);
   assert.equal(verifyStripeSignature('whsec_autre', payload, `t=${t},v1=${v1}`), false);
+});
+
+test('conversion : inscription et premier scan après transmission complète', async () => {
+  const acc = await account('funnel@example.test');
+  const [u] = await query<{ id: string }>("SELECT id FROM users WHERE email='funnel@example.test'");
+  const states = async () => query<{ milestone: string }>(
+    'SELECT milestone FROM conversion_milestones WHERE user_id=$1 ORDER BY milestone', [u.id],
+  );
+  assert.deepEqual((await states()).map(x => x.milestone), ['registered']);
+  const scan = await request('scans', 'POST', {}, acc.cookie);
+  assert.equal(scan.status, 201);
+  const pair = await request('mobile/pair', 'POST', { token: scan.data.url.split('#')[1] });
+  assert.equal(pair.status, 200);
+  const mobileCookie = pair.cookie!.split(';')[0];
+  assert.equal((await request('mobile/pages', 'POST', jpg, mobileCookie)).status, 201);
+  assert.equal((await request('mobile/complete', 'POST', {}, mobileCookie)).status, 200);
+  assert.deepEqual((await states()).map(x => x.milestone), ['first_scan', 'registered']);
+  assert.equal((await request('metrics/funnel', 'GET', undefined, acc.cookie)).status, 403);
+  process.env.METRICS_ADMIN_EMAIL = 'funnel@example.test';
+  try {
+    const report = await request('metrics/funnel', 'GET', undefined, acc.cookie);
+    assert.equal(report.status, 200);
+    assert.ok(report.data.totals.registered >= 1);
+    assert.ok(report.data.totals.first_scan >= 1);
+    assert.equal(JSON.stringify(report.data).includes('Avis de cotisation'), false);
+  } finally { delete process.env.METRICS_ADMIN_EMAIL; }
+});
+
+test('conversion : trois courriers analysés comptés une seule fois', async () => {
+  const acc = await account('three@example.test');
+  const [u] = await query<{ id: string }>("SELECT id FROM users WHERE email='three@example.test'");
+  const { recordThirdDocumentForWorkspace } = await import('../src/lib/conversion');
+  for (let n = 0; n < 3; n++) {
+    await query("INSERT INTO documents(id,workspace_id,source,status) VALUES($1,$2,'pdf','ready')", [
+      randomUUID(), acc.ws,
+    ]);
+    await transaction(async db => recordThirdDocumentForWorkspace(db, acc.ws));
+  }
+  await transaction(async db => recordThirdDocumentForWorkspace(db, acc.ws));
+  const rows = await query(
+    "SELECT achieved_at FROM conversion_milestones WHERE user_id=$1 AND milestone='third_document'",
+    [u.id],
+  );
+  assert.equal(rows.length, 1);
 });
 
 test('paliers : limites par plan et palier essai sans abonnement', () => {

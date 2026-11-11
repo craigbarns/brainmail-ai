@@ -4,6 +4,7 @@ import { ocr, analyze, syncMemory, recallMemory } from './providers';
 import { getFile } from './storage';
 import { Resend } from 'resend';
 import { importInbound } from './inbound';
+import { recordThirdDocumentForWorkspace } from './conversion';
 export async function claimJob() {
   await transaction(async (db) => {
     const { rows } = await db.query(
@@ -121,6 +122,7 @@ export async function processJob(job: Row, providers: Providers = { ocr, analyze
           'INSERT INTO actions(id,workspace_id,document_id,label,due_date,evidence) VALUES($1,$2,$3,$4,$5,$6)',
           [randomUUID(), job.workspace_id, doc.id, a.label, a.dueDate, a.evidence],
         );
+      await recordThirdDocumentForWorkspace(db, job.workspace_id);
       await db.query(
         "UPDATE jobs SET state='done',lease_until=NULL WHERE id=$1 AND lease_token=$2",
         [job.id, job.lease_token],
