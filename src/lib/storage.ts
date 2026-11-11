@@ -3,8 +3,9 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
-import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, unlink, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 import { PDFDocument } from 'pdf-lib';
@@ -85,4 +86,58 @@ export async function getFile(key: string) {
 export async function deleteFile(key: string) {
   if (local()) await unlink(localPath(key)).catch(() => {});
   else await s3().send(new DeleteObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key }));
+}
+// Database backups live under their own prefix, already encrypted by the caller.
+const BACKUP_PREFIX = 'backups/';
+function backupKey(name: string) {
+  if (!/^db-\d{4}-\d{2}-\d{2}\.bin$/.test(name)) throw new Error('Nom de sauvegarde invalide');
+  return BACKUP_PREFIX + name;
+}
+const localBackup = (name: string) =>
+  path.join(
+    /*turbopackIgnore: true*/ process.env.LOCAL_STORAGE_PATH || '.data/files',
+    backupKey(name),
+  );
+export async function putBackup(name: string, bytes: Buffer) {
+  if (local()) {
+    const p = localBackup(name);
+    await mkdir(path.dirname(p), { recursive: true });
+    await writeFile(p, bytes, { mode: 0o600 });
+  } else
+    await s3().send(
+      new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET,
+        Key: backupKey(name),
+        Body: bytes,
+        ContentType: 'application/octet-stream',
+      }),
+    );
+}
+export async function getBackup(name: string) {
+  if (local()) return readFile(/*turbopackIgnore: true*/ localBackup(name));
+  const r = await s3().send(
+    new GetObjectCommand({ Bucket: process.env.S3_BUCKET, Key: backupKey(name) }),
+  );
+  return Buffer.from(await r.Body!.transformToByteArray());
+}
+export async function listBackups(): Promise<string[]> {
+  const valid = (n: string) => /^db-\d{4}-\d{2}-\d{2}\.bin$/.test(n);
+  if (local()) {
+    const dir = path.dirname(localBackup('db-0000-00-00.bin'));
+    return (await readdir(dir).catch(() => [] as string[])).filter(valid).sort();
+  }
+  const r = await s3().send(
+    new ListObjectsV2Command({ Bucket: process.env.S3_BUCKET, Prefix: BACKUP_PREFIX }),
+  );
+  return (r.Contents || [])
+    .map((o) => (o.Key || '').slice(BACKUP_PREFIX.length))
+    .filter(valid)
+    .sort();
+}
+export async function deleteBackup(name: string) {
+  if (local()) await unlink(localBackup(name)).catch(() => {});
+  else
+    await s3().send(
+      new DeleteObjectCommand({ Bucket: process.env.S3_BUCKET, Key: backupKey(name) }),
+    );
 }

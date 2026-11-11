@@ -241,4 +241,12 @@ export async function maintenanceMaybe() {
   if (Date.now() - lastCleanup < 3600_000) return;
   lastCleanup = Date.now();
   await cleanupOnce();
+  // A failed backup must never stop the mail pipeline; it is retried next hour.
+  try {
+    const { backupMaybe } = await import('./backup');
+    const name = await backupMaybe();
+    if (name) console.log('backup_done', name);
+  } catch (error) {
+    console.error('backup_failed', error instanceof Error ? error.message : 'unknown');
+  }
 }
