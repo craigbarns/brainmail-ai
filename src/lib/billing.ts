@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { query, transaction } from './db';
 import { HttpError } from './security';
+import { ga4Event } from './analytics';
 import { recordMilestone } from './conversion';
 
 // Facturation Stripe : l'abonnement appartient à l'utilisateur. Un palier borne
@@ -209,6 +210,7 @@ export async function applySubscription(sub: Record<string, unknown>) {
     (Object.entries(PLANS).find(([, p]) => process.env[p.priceEnv] === priceId)?.[0] as
       PlanName | undefined) ?? null;
   const period = s.current_period_end ? new Date(s.current_period_end * 1000) : null;
+  let resolvedUser: string | null = null;
   await transaction(async (db) => {
     const { rows } = await db.query<{ user_id: string }>(
       'SELECT user_id FROM billing WHERE stripe_subscription_id=$1',
@@ -216,6 +218,7 @@ export async function applySubscription(sub: Record<string, unknown>) {
     );
     const userId = rows[0]?.user_id ?? s.metadata?.user_id;
     if (!userId) return;
+    resolvedUser = userId;
     await db.query(
       `INSERT INTO billing(user_id,plan,stripe_customer_id,stripe_subscription_id,subscription_status,current_period_end,updated_at)
        VALUES($1,$2,$3,$4,$5,$6,now())
@@ -227,6 +230,15 @@ export async function applySubscription(sub: Record<string, unknown>) {
     // "active" peut inclure un code promotionnel : activation, pas revenu confirmé.
     if (s.status === 'active') await recordMilestone(db, userId, 'subscription_activated');
   });
+  if (!resolvedUser) return;
+  // Mesure serveur (sans cookie) : activation, mise à jour, résiliation.
+  const lifecycle =
+    s.status === 'active'
+      ? 'subscription_created'
+      : s.status === 'canceled'
+        ? 'subscription_canceled'
+        : 'subscription_updated';
+  await ga4Event(resolvedUser, lifecycle, { plan: plan ?? 'none', status: s.status });
 }
 
 export async function handleStripeEvent(event: StripeEvent) {

@@ -3,6 +3,7 @@ import { query, transaction } from './db';
 import { cookiesOf, hash, HttpError, secret, passwordHash, verifyPassword } from './security';
 import { Resend } from 'resend';
 import { recordMilestone } from './conversion';
+import { ga4Event } from './analytics';
 export type Identity = {
   userId: string;
   workspaceId: string;
@@ -62,8 +63,9 @@ export async function register(email: string, password: string, name: string) {
       [hash(token), id],
     );
   });
-  // Best effort : un échec de notification n'empêche jamais l'inscription.
+  // Best effort : un échec de notification ou de mesure n'empêche jamais l'inscription.
   await notifyOwnerSignup(email, name).catch(() => undefined);
+  await ga4Event(id, 'sign_up', {});
   return { id, token };
 }
 // Notification propriétaire : chaque nouvelle inscription est signalée
