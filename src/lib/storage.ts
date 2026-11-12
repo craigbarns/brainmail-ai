@@ -37,8 +37,29 @@ export async function validateFile(bytes: Buffer) {
       mime: 'image/jpeg',
     };
   } catch {
+    // libvips rejette certains JPEG d'appareils photo (« Bogus Huffman table
+    // definition » : tables par défaut au lieu d'un DHT explicite). Ce sont des
+    // images valides : on les stocke telles quelles — Mistral OCR les lit très
+    // bien, et le re-encodage (EXIF/orientation) n'était qu'un confort.
+    const sniffed = sniffImage(bytes);
+    if (sniffed) return { bytes, mime: sniffed };
     throw new HttpError(415, 'Format accepté : PDF, JPEG, PNG ou WebP.');
   }
+}
+
+// Signature par octets magiques : JPEG (FF D8 FF), PNG (89 50 4E 47),
+// WebP (RIFF…WEBP). Renvoie null pour tout le reste.
+function sniffImage(bytes: Buffer): 'image/jpeg' | 'image/png' | 'image/webp' | null {
+  if (bytes.length < 12) return null;
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'image/jpeg';
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47)
+    return 'image/png';
+  if (
+    bytes.subarray(0, 4).toString('binary') === 'RIFF' &&
+    bytes.subarray(8, 12).toString('binary') === 'WEBP'
+  )
+    return 'image/webp';
+  return null;
 }
 function s3() {
   return new S3Client({
