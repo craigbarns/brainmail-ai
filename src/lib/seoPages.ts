@@ -20,6 +20,151 @@ export type SeoPage = {
 };
 
 export const SEO_PAGES: SeoPage[] = [
+
+  {
+    slug: 'courrier-expatrie',
+    title: 'Courrier des expatriés : lire son courrier français de l’étranger',
+    description:
+      'Impôts, banque, retraite, huissiers : votre courrier français continue d’arriver. BRAINMAIL le lit, en extrait les échéances et vous rappelle — où que vous soyez. Dès 29 € HT/mois.',
+    h1: 'Expatrié : votre courrier français, lu et géré depuis l’étranger',
+    eyebrow: 'EXPATRIÉS · FRONTALIERS · NOMADES DIGITAUX',
+    crumb: 'Expatriés',
+    summary:
+      'BRAINMAIL fait lire le courrier français des expatriés : scan ou email dédié, échéances sourcées avec citation, brouillons validables à distance. L’adresse physique reste la vôtre ; le contrôle devient numérique.',
+    intro: [
+      'Partir vivre à l’étranger ne fait pas disparaître le courrier français : les avis d’imposition, les courriers de la banque, les attestations de retraite, les recommandés de l’administration continuent d’arriver à une adresse française. Et quand on est à douze heures de décalage, une échéance ratée coûte cher.',
+      'BRAINMAIL devient votre centre de contrôle numérique : le courrier qui arrive en France est scanné ou reçu par email, l’IA en extrait les échéances avec la citation qui prouve la date, et les réponses sont préparées en brouillon — validables depuis n’importe quel fuseau horaire.',
+    ],
+    sections: [
+      {
+        h2: 'Ce que les expatriés font aujourd’hui — et ce que ça coûte',
+        paras: [
+          'Trois solutions dominent, chacune imparfaite : donner l’adresse de ses parents (avec le risque d’oubli et l’effet « boîte aux lettres noire »), payer la réexpédition internationale de La Poste (le papier voyage, s’abîme, et ne couvre pas tout), ou souscrire une domiciliation (un coût fixe qui ne lit rien pour vous).',
+          'Dans tous les cas, le problème reste le même : quelque part en France, un document s’accumule, et c’est VOTRE échéance. Aucune de ces solutions ne lit, ne classe et ne rappelle.',
+        ],
+      },
+      {
+        h2: 'La méthode BRAINMAIL : l’adresse reste, le contrôle devient numérique',
+        paras: [
+          'Vous gardez une adresse en France — chez un proche, via une société de domiciliation ou une réexpédition. Ce qui change : chaque document qui y arrive est scanné en quelques secondes (depuis un téléphone, même par un proche) ou reçu directement sur l’adresse email dédiée de votre espace.',
+          'L’IA lit le document, le classe, extrait les échéances avec leur citation, prépare les brouillons de réponse et déclenche les rappels par email. Vous validez depuis Singapour, Montréal ou Dubaï : la décision reste la vôtre, l’exécution devient systématique.',
+        ],
+        points: [
+          'Aucune application à installer : une page web, un QR code temporaire',
+          'Réception email directe pour les expéditeurs numériques (impots.gouv notifications, banques, assurances)',
+          'Échéances sourcées : la date est prouvée par la citation du document',
+          'Brouillons de réponse validables à distance — rien ne part sans vous',
+          'Données chiffrées AES-256-GCM, stockées en Europe, analyse par Mistral (France)',
+        ],
+      },
+      {
+        h2: 'Un dossier par document, un historique pour votre retour',
+        paras: [
+          'Chaque courrier devient un dossier suivi : reçu, lu, échéance confirmée, réponse envoyée, clôturé. Au moment du retour en France, du bilan annuel avec votre comptable ou d’un contrôle, tout l’historique est consultable et daté — pas de carton perdu, pas de « il paraît que c’est arrivé en mars ».',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Comment recevoir son courrier français quand on est expatrié ?',
+        a: 'Il faut une adresse physique en France : chez un proche, une société de domiciliation ou une réexpédition La Poste. BRAINMAIL prend ensuite le relais : chaque document qui y arrive est scanné ou reçu par email, lu par l’IA, et ses échéances vous sont rappelées où que vous soyez.',
+      },
+      {
+        q: 'La réexpédition de La Poste suffit-elle à l’étranger ?',
+        a: 'La réexpédition internationale fait voyager le papier : lenteur, frais au volume, et un courrier égaré reste égaré. La complémentarité gagnante : faire scanner chaque document à l’arrivée en France et le lire immédiatement dans BRAINMAIL — le papier peut voyager plus tard, ou pas du tout.',
+      },
+      {
+        q: 'Mes parents peuvent-ils scanner mon courrier pour moi ?',
+        a: 'Oui : le scan se fait depuis une simple page web avec un QR code temporaire — aucune application à installer. Un proche photographie les pages du courrier, elles arrivent dans votre espace, et vous les lisez depuis l’étranger dans la minute.',
+      },
+      {
+        q: 'Puis-je gérer les courriers de plusieurs pays ou sociétés ?',
+        a: 'Chaque espace BRAINMAIL couvre une société ou un usage dédié. Le palier Pro (3 sociétés) et le palier Cabinet (10 sociétés) permettent de séparer par exemple une SCI restée en France et l’activité expatriée, avec des échéances distinctes.',
+      },
+      {
+        q: 'Mes documents sont-ils accessibles si je change de pays ?',
+        a: 'Oui, l’accès est un service web : vous vous connectez depuis n’importe quel appareil connecté. Vos documents sont chiffrés et stockés en Europe, et l’analyse est assurée par Mistral (France) — un seul sous-traitant d’IA.',
+      },
+    ],
+    related: [
+      { slug: 'reexpedition-courrier', label: 'Réexpédition de courrier : le comparatif' },
+      { slug: 'courrier-multi-societes', label: 'Dirigeants multi-sociétés' },
+    ],
+  },
+  {
+    slug: 'reexpedition-courrier',
+    title: 'Réexpédition de courrier à l’étranger : comparatif des solutions',
+    description:
+      'La Poste, adresse d’un proche, domiciliation, scan numérique : ce que vaut chaque solution pour gérer son courrier français depuis l’étranger — et comment les combiner.',
+    h1: 'Réexpédition du courrier à l’étranger : ce que chaque solution vaut vraiment',
+    eyebrow: 'COMPARATIF · EXPATRIÉS · MOBILITÉ INTERNATIONALE',
+    crumb: 'Réexpédition',
+    summary:
+      'Comparatif honnête des solutions de réexpédition de courrier à l’étranger (La Poste, proche, domiciliation) et du complément numérique : scan à la source, échéances rappelées, réponses préparées.',
+    intro: [
+      'Avant de partir vivre à l’étranger, la question du courrier arrive vite : que deviennent les avis d’imposition, les courriers de la banque, les recommandés ? Les solutions existent, mais aucune ne fait tout — et les comparer honnêtement évite les mauvaises surprises.',
+      'Voici les quatre options, ce qu’elles coûtent, ce qu’elles couvrent, et comment les combiner pour un dispositif qui tient la distance.',
+    ],
+    sections: [
+      {
+        h2: 'Les quatre solutions, en clair',
+        paras: [
+          '1. La réexpédition internationale de La Poste : le papier est renvoyé vers votre adresse étrangère. Points forts : officielle, simple à activer. Limites : durée limitée, coûts par volume, lenteur du transport, courriers égarés non récupérables, et rien ne lit le contenu pour vous.',
+          '2. L’adresse d’un proche : gratuite et souple. Limites : c’est une faveur durable, la boîte aux lettres se remplit, et aucun rappel n’existe pour les échéances qui s’y entassent.',
+          '3. La domiciliation commerciale : une adresse professionnelle et une gestion du réacheminement. Limites : coût mensuel récurrent, et là encore personne ne lit ni ne classe le contenu.',
+          '4. La lecture numérique : chaque document est scanné à son arrivée en France et devient un dossier lu, classé, avec des échéances rappelées. C’est le rôle de BRAINMAIL — complémentaire des trois autres, jamais concurrent.',
+        ],
+      },
+      {
+        h2: 'Ce que la réexpédition ne règle pas',
+        paras: [
+          'Réexpédier le papier déplace le problème : vous recevez en Inde ou au Canada des documents que vous devez toujours lire, dater et traiter — dans une langue, un calendrier et un fuseau horaire qui ne sont pas ceux de l’administration française.',
+          'Et le courrier urgent (huissier, impôts avec délai court, assurance) n’attend pas deux semaines d’acheminement. C’est précisément ce trou que comble le scan à la source : le document est lu le jour où il arrive, pas le mois où il arrive.',
+        ],
+        points: [
+          'Scan à la source : lecture le jour même, depuis n’importe quel fuseau horaire',
+          'Échéances extraites avec la citation qui prouve la date dans le document',
+          'Rappels par email sur les horloges du service — pas de courrier perdu',
+          'Brouillons de réponse préparés et validés à distance',
+          'Historique daté et consultable — utile au retour en France ou en cas de contrôle',
+        ],
+      },
+      {
+        h2: 'Le dispositif recommandé',
+        paras: [
+          'Adresse physique : un proche ou une domiciliation selon votre situation (la réexpédition La Poste seule ne couvre ni la durée ni les recommandés dans certains cas). Lecture et suivi : BRAINMAIL, dès 29 € HT par mois, avec 3 mois offerts pour le premier essai via le code pilote.',
+          'Vos documents restent chiffrés et stockés en Europe, analysés par Mistral (France). Rien ne part sans votre validation — vous gardez le contrôle depuis l’autre bout du monde.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Quelle est la meilleure solution pour recevoir son courrier à l’étranger ?',
+        a: 'Il n’y en a pas une seule : une adresse physique en France (proche ou domiciliation) combinée à une lecture numérique type BRAINMAIL donne le meilleur résultat — le document est lu le jour de son arrivée, ses échéances sont rappelées, et rien ne dépend de l’acheminement international du papier.',
+      },
+      {
+        q: 'Combien coûte la réexpédition internationale de La Poste ?',
+        a: 'Le tarif dépend de la destination et de la durée (formules de quelques mois, au volume). À cela s’ajoute l’inconvénient principal : vous recevez le papier sans lecture, classement ni rappel des échéances. BRAINMAIL complète ce dispositif pour 29 € HT par mois.',
+      },
+      {
+        q: 'Peut-on faire suivre un recommandé à l’étranger ?',
+        a: 'Un recommandé se réexpédie parfois, mais sa valeur juridique et sa rapidité en souffrent. La méthode fiable : le faire scanner à l’arrivée en France pour en prendre connaissance immédiatement, puis décider — répondre, mandater un proche, ou faire suivre si nécessaire.',
+      },
+      {
+        q: 'BRAINMAIL fournit-il une adresse postale ?',
+        a: 'Non — et c’est assumé : BRAINMAIL est la couche numérique qui lit, classe, extrait les échéances et prépare les réponses. L’adresse physique reste la vôtre (proche, domiciliation). Cela évite tout conflit avec les exigences d’adresse officielle de l’administration française.',
+      },
+      {
+        q: 'Comment tester la lecture numérique de mon courrier ?',
+        a: 'Créez votre espace sur www.brainmail.ai, choisissez le palier Solo et utilisez le code pilote fourni par votre contact : trois mois offerts pour valider le dispositif avant votre départ ou pendant votre expatriation, sans engagement.',
+      },
+    ],
+    related: [
+      { slug: 'courrier-expatrie', label: 'Le courrier des expatriés' },
+      { slug: 'courrier-multi-societes', label: 'Dirigeants multi-sociétés' },
+    ],
+  },
+
   {
     slug: 'courrier-auto-entrepreneur',
     crumb: 'Auto-entrepreneurs',
