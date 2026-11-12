@@ -67,12 +67,15 @@ export default function Page() {
         requêtes, limitation du nombre d&apos;essais de connexion, relecture humaine
         obligatoire avant toute action.
       </p>
-      <h2>9. Cookies</h2>
+      <h2>9. Cookies et mesure d&apos;audience</h2>
       <p>
         Le service n&apos;utilise qu&apos;un cookie de session strictement nécessaire à la
-        connexion, exempté de consentement. Aucun traceur publicitaire ni service
-        d&apos;audience tiers. Les événements de progression sont enregistrés côté serveur,
-        sans cookie d&apos;analyse.
+        connexion, exempté de consentement. Les pages publiques du site chargent Google Tag
+        Manager, qui peut déposer des cookies de mesure d&apos;audience (statistiques de
+        visite ; aucune vente de données, aucun profilage publicitaire). Vous pouvez bloquer
+        ces traceurs via les réglages de votre navigateur ou un blocage de
+        googletagmanager.com sans perdre l&apos;accès au service. Une mesure d&apos;audience
+        conforme au régime CNIL (consentement préalable) est en cours de mise en place.
       </p>
     </LegalShell>
   );
