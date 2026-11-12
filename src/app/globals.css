@@ -3001,3 +3001,32 @@ p.error {
     padding: 20px 18px;
   }
 }
+
+
+/* Capture réelle de l'application + bandeau pilote */
+.apercu-reelle {
+  margin-top: 34px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(18, 55, 43, .18);
+  width: 100%;
+  height: auto;
+}
+.apercu-caption {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+.pilot-banner {
+  max-width: 780px;
+  margin: 0 auto 26px;
+  background: var(--mark);
+  border: 1px solid var(--line-strong);
+  border-left: 6px solid var(--green);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 14px;
+  color: var(--ink);
+}
+.pilot-banner strong { color: var(--green-ink); }
