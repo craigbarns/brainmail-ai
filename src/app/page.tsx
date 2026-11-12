@@ -381,6 +381,16 @@ export default async function Home() {
             </aside>
           </div>
         </div>
+        <img
+          src="/apercu-app.jpg"
+          alt="Capture réelle de l’application BRAINMAIL : vue d’ensemble avec un avis URSSAF analysé, ses deux actions à vérifier pour le 30 novembre et l’échéance dans le registre."
+          className="apercu-reelle"
+          loading="lazy"
+        />
+        <p className="apercu-caption">
+          Capture réelle de l’application — un avis URSSAF arrivé par email, analysé en quelques
+          secondes, deux actions à confirmer. Pas une maquette.
+        </p>
       </section>
 
       <section id="fonctions" className="lp-section">
@@ -455,6 +465,11 @@ export default async function Home() {
           <p className="overline">Tarifs</p>
           <h2>Moins cher qu’une semaine de secrétariat.</h2>
         </header>
+        <div className="pilot-banner">
+          <strong>Offre pilote fondateur :</strong> 3 mois offerts pour les 10 premiers cabinets et
+          dirigeants qui nous font leur retour d’expérience. Créez votre espace, choisissez votre
+          palier, puis saisissez le code <strong>PILOTE</strong> au paiement.
+        </div>
         <div className="pricing-grid">
           {PLANS.map((p) => (
             <article key={p.name} className={p.best ? 'price-card best' : 'price-card'}>
