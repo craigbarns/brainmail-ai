@@ -39,6 +39,7 @@ const output: Analysis = {
   title: 'Avis de cotisation',
   category: 'Assurance',
   sender: 'Assureur test',
+  recipient: 'Société test',
   summary: 'Cotisation à vérifier.',
   actions: [
     {
@@ -647,6 +648,57 @@ test('conversion : trois courriers analysés comptés une seule fois', async () 
     [u.id],
   );
   assert.equal(rows.length, 1);
+});
+
+test('analyse : règles anti-défauts dans le prompt (destinataire, alternatives, échéances réelles) et citations nettoyées', async () => {
+  const old = globalThis.fetch;
+  process.env.MISTRAL_API_KEY = 'test-only';
+  try {
+    let seenPrompt = '';
+    globalThis.fetch = async (input, init) => {
+      const b = JSON.parse(init!.body as string);
+      if (String(input).includes('/ocr')) return Response.json({ pages: [{ markdown: 'Texte test' }] });
+      seenPrompt = b.messages[0].content;
+      return Response.json({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                title: 'Relance DURAND IMMO',
+                category: 'Juridique',
+                sender: 'DURAND IMMO',
+                recipient: 'SCI WEINVEST',
+                summary: 'Solde débiteur à régler.',
+                actions: [
+                  {
+                    label: 'Régulariser le solde (virement, chèque ou mandat SEPA)',
+                    dueDate: null,
+                    evidence: '« « Solde débiteur à régulariser dès réception » »',
+                  },
+                ],
+                draft: 'À l’attention de DURAND IMMO : nous accusons réception de votre relance.',
+              }),
+            },
+          },
+        ],
+      });
+    };
+    const r = await analyze('Relance de DURAND IMMO. Solde débiteur à régulariser dès réception.', '');
+    // Les trois règles contractuelles doivent figurer dans le prompt système.
+    assert.ok(seenPrompt.includes('EXPÉDITEUR vs DESTINATAIRE'), 'règle destinataire manquante');
+    assert.ok(seenPrompt.includes('ACTIONS ALTERNATIVES'), 'règle alternatives manquante');
+    assert.ok(seenPrompt.includes('ÉCHÉANCES RÉELLES'), 'règle échéances manquante');
+    assert.ok(seenPrompt.includes('sans guillemets ajoutés'), 'règle citations manquante');
+    // Le destinataire extrait est renvoyé tel quel (pour l’avertissement UI).
+    assert.equal(r.recipient, 'SCI WEINVEST');
+    // Les guillemets doublés de la citation sont normalisés.
+    assert.equal(r.actions[0].evidence, '« Solde débiteur à régulariser dès réception »');
+    // La réponse s’adresse à l’expéditeur, pas à la société destinataire du courrier.
+    assert.ok(!r.draft.startsWith('À l’attention de SCI WEINVEST'));
+  } finally {
+    globalThis.fetch = old;
+    delete process.env.MISTRAL_API_KEY;
+  }
 });
 
 test('paliers : limites par plan et palier essai sans abonnement', () => {
