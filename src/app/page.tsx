@@ -43,16 +43,24 @@ const SOLUTIONS = [
 ] as const;
 const STEPS = [
   [
-    'Scannez, en 30 secondes',
-    'Un QR code affiché à l’écran, votre téléphone photographie chaque page — ou glissez un PDF. Multipages, jusqu’à 50 Mo.',
+    'Importez un vrai courrier',
+    'Un QR code affiché à l’écran, votre téléphone photographie chaque page — ou glissez un PDF, ou laissez l’expéditeur écrire à votre adresse email dédiée. Multipages, jusqu’à 50 Mo.',
   ],
   [
-    'L’IA fait le tri',
-    'Lecture puis analyse : titre, expéditeur, catégorie, résumé — et chaque échéance doit être citée noir sur blanc dans le document.',
+    'Lisez « L’essentiel »',
+    'Titre, expéditeur, catégorie, résumé en français clair. La pile de papier devient une ligne de registre lisible.',
   ],
   [
-    'Vous décidez',
-    'Confirmez les actions à suivre, relisez et validez le brouillon de réponse. Rien ne part sans vous.',
+    'Voyez l’action proposée',
+    'À régler, à vérifier, à répondre — avec les modalités regroupées et jamais de date inventée : pas de limite écrite dans le document, pas de date proposée.',
+  ],
+  [
+    'Cliquez la citation : la preuve',
+    'Chaque échéance est justifiée par la phrase exacte du document, mise en évidence. Un regard, et vous savez d’où vient la date.',
+  ],
+  [
+    'Confirmez — le rappel suivra',
+    'Vous validez l’action, BRAINMAIL vous rappelle par email avant la date. Rien ne part et rien n’est payé sans vous.',
   ],
 ];
 const FEATURES = [
@@ -196,7 +204,7 @@ const LANDING_FAQS = [
 export const metadata: Metadata = {
   title: { absolute: 'Logiciel de gestion du courrier par IA | BRAINMAIL' },
   description:
-    'BRAINMAIL centralise vos courriers papier et emails, analyse les documents avec l’IA, suit les échéances et prépare les réponses. Pour TPE, SCI et cabinets.',
+    'BRAINMAIL centralise vos courriers papier et emails, analyse les documents avec l’IA, suit les échéances et vous rappelle avant chaque date limite. Pour TPE, SCI et cabinets.',
   alternates: { canonical: '/' },
   openGraph: {
     title: 'Logiciel de gestion du courrier par IA | BRAINMAIL',
@@ -246,8 +254,8 @@ export default async function Home() {
           </h1>
           <p className="lp-lede">
             BRAINMAIL est un logiciel de gestion du courrier par IA : il centralise vos courriers
-            papier et emails, extrait les échéances avec leur citation et prépare des réponses à
-            valider — pour toutes vos sociétés, au même endroit.
+            papier et emails, extrait les échéances avec leur citation, et vous rappelle avant
+            chaque date limite — pour toutes vos sociétés, au même endroit.
           </p>
           <div className="lp-cta-row">
             <Link href={signup} className="button large">
@@ -580,7 +588,7 @@ export default async function Home() {
                   'Un espace isolé par société, chiffrement AES-256-GCM',
                 ],
                 description:
-                  'BRAINMAIL centralise le courrier papier et les emails de vos sociétés, extrait les échéances avec leur citation dans le document, et prépare les réponses à valider.',
+                  'BRAINMAIL centralise le courrier papier et les emails de vos sociétés, extrait les échéances avec leur citation dans le document, et vous rappelle avant chaque date limite.',
                 offers: [
                   {
                     '@type': 'Offer',
