@@ -204,7 +204,7 @@ const LANDING_FAQS = [
 export const metadata: Metadata = {
   title: { absolute: 'Logiciel de gestion du courrier par IA | BRAINMAIL' },
   description:
-    'BRAINMAIL centralise vos courriers papier et emails, analyse les documents avec l’IA, suit les échéances et vous rappelle avant chaque date limite. Pour TPE, SCI et cabinets.',
+    'BRAINMAIL centralise vos courriers papier et emails, extrait les échéances avec leur citation et vous rappelle avant chaque date limite. TPE, SCI et cabinets.',
   alternates: { canonical: '/' },
   openGraph: {
     title: 'Logiciel de gestion du courrier par IA | BRAINMAIL',
@@ -233,7 +233,7 @@ export default async function Home() {
           <a href="#produit">Aperçu</a>
           <a href="#confiance">Confiance</a>
           <a href="#solutions">Solutions</a>
-          <a href="#tarifs">Tarifs</a>
+          <Link href="/tarifs">Tarifs</Link>
           <Link href="/comment-ca-marche">Comment ça marche</Link>
         </nav>
         <div className="lp-nav-cta">
@@ -474,9 +474,10 @@ export default async function Home() {
           <h2>Moins cher qu’une semaine de secrétariat.</h2>
         </header>
         <div className="pilot-banner">
-          <strong>Offre pilote fondateur :</strong> 3 mois offerts pour les 10 premiers cabinets et
-          dirigeants qui nous font leur retour d’expérience. Créez votre espace, choisissez votre
-          palier, puis saisissez le code <strong>PILOTE</strong> au paiement.
+          <strong>Essayez d’abord :</strong> 20 courriers gratuits, sans carte bancaire.{' '}
+          <strong>Pour aller plus loin — offre pilote fondateur :</strong> 3 mois offerts pour les
+          10 premiers qui nous font leur retour d’expérience (code <strong>PILOTE</strong> au
+          paiement).
         </div>
         <div className="pricing-grid">
           {PLANS.map((p) => (
@@ -640,7 +641,7 @@ export default async function Home() {
           <a href="#parcours">Parcours</a>
           <a href="#fonctions">Fonctionnalités</a>
           <a href="#confiance">Confiance</a>
-          <a href="#tarifs">Tarifs</a>
+          <Link href="/tarifs">Tarifs</Link>
           <Link href="/solutions">Solutions</Link>
           <Link href="/comment-ca-marche">Comment ça marche</Link>
           <Link href="/legal/mentions-legales">Mentions légales</Link>

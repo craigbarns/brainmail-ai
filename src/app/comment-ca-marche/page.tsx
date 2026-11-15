@@ -5,9 +5,9 @@ import { SiteFooterNav } from '@/components/seoArticle';
 import { SITE, PLAN_OFFERS, PUBLISHED, UPDATED, isoDate, frDate } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Comment fonctionne BRAINMAIL : du courrier papier à l’échéance confirmée',
+  title: 'Comment marche BRAINMAIL : scan, échéance prouvée, rappel',
   description:
-    'Scan par QR code, lecture par Mistral, échéances citées dans le document, rappels par email, brouillon de réponse à valider : le parcours complet d’un courrier dans BRAINMAIL, étape par étape.',
+    'Le parcours complet : scan QR, lecture IA, échéance citée dans le document, rappel avant la date — étape par étape.',
   alternates: { canonical: '/comment-ca-marche' },
   openGraph: {
     title: 'Comment fonctionne BRAINMAIL',

@@ -15,6 +15,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       images: [`${SITE.url}/opengraph-image`],
     },
     {
+      url: `${SITE.url}/tarifs`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
       url: `${SITE.url}/comment-ca-marche`,
       lastModified: UPDATED,
       changeFrequency: 'monthly',
