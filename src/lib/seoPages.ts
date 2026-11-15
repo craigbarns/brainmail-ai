@@ -374,8 +374,9 @@ export const SEO_PAGES: SeoPage[] = [
       },
     ],
     related: [
-      { slug: 'courrier-multi-societes', label: 'Dirigeants multi-sociétés' },
-      { slug: 'courrier-auto-entrepreneur', label: 'Artisans et indépendants' },
+      { slug: 'logiciel-suivi-courrier-cabinet', label: 'Logiciel de suivi du courrier' },
+      { slug: 'courrier-clients-expert-comptable', label: 'Le courrier de vos clients' },
+      { slug: 'dematerialisation-courrier-cabinet', label: 'Dématérialisation du courrier' },
     ],
   },
   {
@@ -446,6 +447,220 @@ export const SEO_PAGES: SeoPage[] = [
     related: [
       { slug: 'courrier-multi-societes', label: 'Dirigeants multi-sociétés' },
       { slug: 'courrier-auto-entrepreneur', label: 'Artisans et indépendants' },
+    ],
+  },
+
+  {
+    slug: 'logiciel-suivi-courrier-cabinet',
+    title: 'Logiciel de suivi du courrier pour cabinet comptable',
+    description:
+      'Chaque courrier de vos clients devient une ligne de registre : qui ’écrit, quoi faire, pour quand — avec la preuve citée. BRAINMAIL, dès 149 € HT/mois pour 10 sociétés.',
+    h1: 'Un registre du courrier pour votre cabinet, sans double saisie',
+    eyebrow: 'LOGICIEL DE SUIVI · CABINETS COMPTABLES',
+    crumb: 'Logiciel de suivi',
+    summary:
+      'BRAINMAIL tient le registre du courrier d’un cabinet : chaque document client est scanné ou reçu par email, classé, et ses échéances sont citées et rappelées. Le suivi existe sans double saisie ni relance téléphonique.',
+    intro: [
+      'Dans un cabinet, le courrier des dossiers circule par des canaux informels : le client appelle, le collaborateur note sur un post-it, la date limite dort dans un document que personne n’a rouvert. Aucun outil de production comptable ne suit ce flux — il n’apparaît nulle part dans les écritures.',
+      'Un logiciel de suivi du courrier comble ce trou : chaque document devient une ligne datée et sourcée, lisible par toute l’équipe, avec des rappels avant les dates limites.',
+    ],
+    sections: [
+      {
+        h2: 'Ce qu’un registre de courrier doit faire',
+        paras: [
+          'Consigner qui a écrit, quoi, pour quand — avec la preuve dans le document, pas une note de mémoire. Classer par société et par dossier. Alerter avant la date. Et rester consultable des mois plus tard, au moment du bilan ou du contrôle.',
+          'BRAINMAIL fait exactement cela : l’IA lit chaque document, en extrait les échéances avec leur citation, et le cabinet garde la vue sur l’ensemble du portefeuille sans collecter les justificatifs à la main.',
+        ],
+      },
+      {
+        h2: 'Sans double saisie, sans relance',
+        paras: [
+          'Le client scanne son courrier depuis son téléphone (QR code temporaire) ou fait écrire ses expéditeurs numériques à l’adresse email dédiée de son espace. La saisie se fait une fois, à la source — le cabinet consulte, confirme, et l’historique se construit tout seul.',
+          'Les réponses sont préparées en brouillon et validées avant tout envoi : le cabinet garde le contrôle professionnel du contenu, avec un gain de temps sur chaque échange.',
+        ],
+        points: [
+          'Registre daté par société et par dossier, consultable par l’équipe',
+          'Échéances citées : la date est prouvée dans le document, jamais inventée',
+          'Rappels email avant les dates limites, sur l’horloge du service',
+          'Palier Cabinet : 10 sociétés, 1 000 courriers par mois, +15 € HT par société au-delà',
+          'Données chiffrées AES-256-GCM en Europe, analyse par Mistral (France)',
+        ],
+      },
+      {
+        h2: 'Installé en une réunion, utile dès la première semaine',
+        paras: [
+          'Vous créez les espaces de vos clients, ils scannent leur courrier de la semaine, et le registre se remplit. Programme pilote fondateur : 3 mois offerts contre votre retour d’expérience — demandez-le à votre contact BRAINMAIL.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Quel logiciel pour suivre le courrier d’un cabinet comptable ?',
+        a: 'BRAINMAIL tient le registre du courrier de chaque société cliente : documents scannés ou reçus par email, échéances extraites avec leur citation dans le document, rappels avant les dates limites. 149 € HT par mois pour 10 sociétés, sans engagement.',
+      },
+      {
+        q: 'Le cabinet doit-il ressaisir les informations du courrier ?',
+        a: 'Non. La saisie se fait une fois, à la source : le client scanne le document ou le reçoit sur l’adresse email dédiée de son espace. Le cabinet consulte le registre et confirme les actions — aucune double saisie.',
+      },
+      {
+        q: 'Le suivi couvre-t-il les courriers officiels (URSSAF, impôts, huissiers) ?',
+        a: 'Oui, tous les documents du dossier suivent le même circuit : analyse, classement, échéance citée et rappel. Les courriers officiels sont précisément ceux où une date manquée coûte le plus cher.',
+      },
+      {
+        q: 'Mes collaborateurs peuvent-ils consulter le registre ?',
+        a: 'Le service gère des rôles : le propriétaire de l’espace peut donner un accès membre à un collaborateur du cabinet, qui consulte les documents et dossiers avec ses propres identifiants.',
+      },
+      {
+        q: 'Peut-on tester avant d’équiper tout le portefeuille ?',
+        a: 'Oui : un espace pilote sur une ou deux sociétés suffit pour valider le circuit en une semaine. Le code pilote fondateur offre trois mois sans paiement sur le palier choisi.',
+      },
+    ],
+    related: [
+      { slug: 'courrier-expert-comptable', label: 'Cabinets et experts-comptables' },
+      { slug: 'courrier-clients-expert-comptable', label: 'Le courrier de vos clients' },
+      { slug: 'dematerialisation-courrier-cabinet', label: 'Dématérialisation du courrier' },
+    ],
+  },
+  {
+    slug: 'courrier-clients-expert-comptable',
+    title: 'Le courrier de vos clients expert-comptable, visible sans relance',
+    description:
+      'Fini de demander « vous avez reçu l’avis ? » : les courriers de vos clients arrivent dans BRAINMAIL, analysés et datés. Le cabinet garde la vue. Dès 149 € HT/mois.',
+    h1: 'Le courrier de vos clients, visible sans leur demander',
+    eyebrow: 'CABINETS · RELATIONS CLIENTS · SUIVI DES DOSSIERS',
+    crumb: 'Courrier des clients',
+    summary:
+      'BRAINMAIL rend visible le courrier de vos clients sans relance téléphonique : chaque document est scanné ou reçu par email dans un espace dédié, analysé, et ses échéances sont citées et rappelées.',
+    intro: [
+      'Chaque saison, la même danse : « vous avez reçu l’avis URSSAF ? », « envoyez-moi la relance de l’assurieur », « le recommandé de l’huissier est bien arrivé ? ». Le courrier des clients vit en dehors de vos outils, et chaque pièce manquée retarde un dossier.',
+      'Avec BRAINMAIL, le courrier de vos clients entre dans un espace visible du cabinet : scanné ou reçu par email, analysé, daté, et suivi jusqu’à clôture. Vous ne demandez plus — vous voyez.',
+    ],
+    sections: [
+      {
+        h2: 'Ce que la visibilité change',
+        paras: [
+          'Un avis d’appel qui traîne chez le client devient une majoration. Une attestation d’assurance périmée, un sinistre non couvert. Un recommandé d’huissier ouvert trop tard, une procédure engagée. Tous ces incidents naissent d’un document que personne n’a mis au bon endroit au bon moment.',
+          'Le suivi numérique supprime le point de rupture : le document est lu le jour de son arrivée, ses échéances sont citées dans le texte, et le rappel part automatiquement — pour le client et pour vous.',
+        ],
+      },
+      {
+        h2: 'Le client reste au centre — le cabinet garde la main',
+        paras: [
+          'Le client scanne son courrier en 30 secondes depuis son téléphone, ou bascule ses expéditeurs email sur l’adresse dédiée de son espace. L’IA prépare les brouillons de réponse : le cabinet les relit, les ajuste, les valide. Aucun envoi automatique, aucune action irréversible sans validation humaine.',
+          'Les espaces sont séparés par société : la SCI du client n’apparaît jamais dans le dossier de sa SARL, et les adresses de réception sont tournantes et révocables.',
+        ],
+        points: [
+          'Une ligne de registre par courrier : qui, quoi, pour quand — avec la citation',
+          'Vues par société et par dossier, historique daté et consultable',
+          'Rappels avant les échéances, pour le client et pour le cabinet',
+          'Chiffrement AES-256-GCM, stockage en Europe, analyse Mistral (France)',
+          'Palier Cabinet : 10 sociétés incluses, +15 € HT par société au-delà',
+        ],
+      },
+      {
+        h2: 'Le gain se voit la première semaine',
+        paras: [
+          'Créez les espaces de deux clients pilotes, laissez-les scanner leur courrier de la semaine, et comparez : les échéances qui s’affichent sont celles qui, auparavant, ressurgaient en retard. Programme pilote fondateur : 3 mois offerts contre un retour d’expérience.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Comment suivre le courrier de plusieurs clients à la fois ?',
+        a: 'BRAINMAIL donne un espace à chaque société cliente, et le cabinet consulte l’ensemble depuis son abonnement : documents analysés, échéances citées, actions confirmées. Le palier Cabinet couvre 10 sociétés, puis 15 € HT par société supplémentaire.',
+      },
+      {
+        q: 'Que se passe-t-il si le client oublie de scanner ?',
+        a: 'Les expéditeurs numériques écrivent directement à l’adresse email dédiée de l’espace : une partie du courrier arrive sans action du client. Pour le papier, le scan prend 30 secondes — et le registre rend immédiatement visible le jour où rien n’est arrivé.',
+      },
+      {
+        q: 'Le client garde-t-il le contrôle de ses réponses ?',
+        a: 'Oui : l’IA prépare des brouillons, mais rien ne part sans validation. Le client ou le cabinet relit, modifie et envoie — le service n’effectue jamais d’action irréversible seul.',
+      },
+      {
+        q: 'Les données des clients sont-elles séparées entre eux ?',
+        a: 'Chaque société a son propre espace, avec son adresse de réception distincte et tournante. Les espaces sont isolés : ni les documents ni les échéances ne se mélangent entre clients.',
+      },
+      {
+        q: 'Quel est le coût pour un portefeuille de dix clients ?',
+        a: '149 € HT par mois pour 10 sociétés et 1 000 courriers par mois, puis 15 € HT par société supplémentaire. Support prioritaire et onboarding accompagné inclus, sans engagement.',
+      },
+    ],
+    related: [
+      { slug: 'courrier-expert-comptable', label: 'Cabinets et experts-comptables' },
+      { slug: 'logiciel-suivi-courrier-cabinet', label: 'Logiciel de suivi du courrier' },
+      { slug: 'dematerialisation-courrier-cabinet', label: 'Dématérialisation du courrier' },
+    ],
+  },
+  {
+    slug: 'dematerialisation-courrier-cabinet',
+    title: 'Dématérialiser le courrier d’un cabinet : scan à la source et IA',
+    description:
+      'Scanner chaque courrier à son arrivée, recevoir les expéditeurs numériques par email, tout suivre avec des échéances sourcées : la dématérialisation utile, dès 29 € HT/mois.',
+    h1: 'Dématérialisation du courrier : le scan à la source, pas le papier déplacé',
+    eyebrow: 'DÉMATÉRIALISATION · CABINETS · TPE',
+    crumb: 'Dématérialisation',
+    summary:
+      'La dématérialisation utile du courrier d’un cabinet : scan à la source, réception email dédiée, analyse IA avec échéances citées et rappels. Le papier cessé de circuler, le suivi commence.',
+    intro: [
+      'La plupart des cabinets ont déjà dématérialisé leurs pièces comptables. Le courrier, lui, reste le dernier flux papier : il arrive, il s’entasse, il attend qu’quelqu’un l’ouvre au bon moment.',
+      'Dématérialiser le courrier, ce n’est pas déplacer le papier vers un scanner : c’est le faire lire et suivre dès son arrivée — par le client lui-même, depuis son téléphone, en quelques secondes.',
+    ],
+    sections: [
+      {
+        h2: 'Le scan à la source bat la numérisation centralisée',
+        paras: [
+          'La méthode classique — collecter le papier, le numériser au cabinet — déplace le document et retarde la lecture. Le jour où l’avis d’appel est numérisé n’est pas le jour où il est arrivé.',
+          'À la source, le client photographie le document le jour de la réception : l’IA le lit immédiatement, en extrait les échéances avec leur citation, et les rappels partent avant les dates. Le papier peut rejoindre l’archivage — il n’est plus porteur de l’information.',
+        ],
+      },
+      {
+        h2: 'Deux canaux, un seul registre',
+        paras: [
+          'Les expéditeurs numériques (URSSAF, impôts, banques, assurances) écrivent directement à l’adresse email dédiée de chaque espace. Le papier est scanné au téléphone via un QR code temporaire. Les deux flux arrivent au même endroit : le registre daté du dossier.',
+          'Chaque échéance porte sa citation : l’IA ne propose une date que si elle la retrouve écrite dans le document. Les brouillons de réponse sont préparés et validés — rien ne part sans validation humaine.',
+        ],
+        points: [
+          'Scan mobile multipages, 30 secondes par courrier, sans application à installer',
+          'Réception email dédiée et tournante par société',
+          'Échéances sourcées et rappels email avant les dates',
+          'Historique daté — utile au bilan, au contrôle, à la reprise de dossier',
+          'Chiffrement AES-256-GCM, stockage Europe, analyse Mistral (France)',
+        ],
+      },
+      {
+        h2: 'Commencer petit, généraliser ensuite',
+        paras: [
+          'Un espace, un mois, un client pilote : le palier Solo à 29 € HT suffit pour valider le circuit. Généralisez ensuite avec le palier Pro (3 sociétés) ou Cabinet (10 sociétés). Pilote fondateur : 3 mois offerts contre un retour d’expérience.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Comment dématérialiser le courrier d’un cabinet ?',
+        a: 'Chaque document est scanné à la source par le client (téléphone, QR code temporaire) ou reçu sur l’adresse email dédiée de son espace. L’IA le lit, le classe et en extrait les échéances citées — le registre se construit sans déplacement de papier.',
+      },
+      {
+        q: 'Le scan à la source remplace-t-il la numérisation au cabinet ?',
+        a: 'Il la précède : le document est lu et daté le jour de sa réception, avant même d’arriver au cabinet. La numérisation centralisée garde son rôle pour l’archivage des pièces comptables ; le courrier, lui, doit être traité à l’instant.',
+      },
+      {
+        q: 'Faut-il changer l’adresse officielle de la société ?',
+        a: 'Non. Le client garde son adresse officielle actuelle. Les expéditeurs numériques sont dirigés vers l’adresse email dédiée de l’espace, et le papier est scanné au fil de l’eau — aucun changement administratif n’est nécessaire.',
+      },
+      {
+        q: 'Les images scannées restent-elles lisibles pour l’administration ?',
+        a: 'Oui : les documents sont conservés dans leur format d’origine, chiffrés en AES-256-GCM, et consultables dans l’historique daté de l’espace. L’analyse n’altère jamais le fichier source.',
+      },
+      {
+        q: 'Combien coûte la dématérialisation du courrier ?',
+        a: '29 € HT par mois pour une société (palier Solo, 50 courriers), 59 € HT pour trois sociétés (Pro, 200 courriers), 149 € HT pour dix (Cabinet, 1 000 courriers). Sans engagement, résiliation en un clic.',
+      },
+    ],
+    related: [
+      { slug: 'courrier-expert-comptable', label: 'Cabinets et experts-comptables' },
+      { slug: 'logiciel-suivi-courrier-cabinet', label: 'Logiciel de suivi du courrier' },
+      { slug: 'courrier-clients-expert-comptable', label: 'Le courrier de vos clients' },
     ],
   },
 ];
