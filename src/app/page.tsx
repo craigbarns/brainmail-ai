@@ -649,6 +649,23 @@ export default async function Home() {
           <Link href="/legal/confidentialite">Confidentialité</Link>
           <Link href={`${app}/login`}>Connexion</Link>
         </nav>
+        <nav aria-label="Solutions par profil" style={{ marginTop: 10 }}>
+          {[
+            ['courrier-auto-entrepreneur', 'Auto-entrepreneurs'],
+            ['courrier-multi-societes', 'Multi-sociétés'],
+            ['courrier-expert-comptable', 'Cabinets'],
+            ['courrier-clients-expert-comptable', 'Courrier des clients'],
+            ['logiciel-suivi-courrier-cabinet', 'Suivi du courrier'],
+            ['dematerialisation-courrier-cabinet', 'Dématérialisation'],
+            ['courrier-sci', 'SCI'],
+            ['courrier-expatrie', 'Expatriés'],
+            ['reexpedition-courrier', 'Réexpédition'],
+          ].map(([slug, label]) => (
+            <Link key={slug} href={`/solutions/${slug}`}>
+              {label}
+            </Link>
+          ))}
+        </nav>
         <p className="lp-legal">
           © {new Date().getFullYear()} WeMade SASU — Marseille, France. SIREN 832 419 428. Prix HT ;
           TVA française 20 % ajoutée au paiement.
